@@ -3,6 +3,8 @@ package de.dhbw_mannheim.photohub;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
@@ -38,6 +40,7 @@ public class MainActivity extends AppCompatActivity
     static final int PICK_PHOTO_REQUEST = 1;
     static final int LOAD_PHOTO_REQUEST = 2;
 
+    ArrayList<Bitmap> bitmaps = new ArrayList<>();
     ArrayList<Integer> images = new ArrayList<>();
     ArrayList<String> titles = new ArrayList<>();
     ArrayList<String> descriptions = new ArrayList<>();
@@ -49,6 +52,7 @@ public class MainActivity extends AppCompatActivity
     protected void onSaveInstanceState(Bundle extra) {
         super.onSaveInstanceState(extra);
         extra.putString("tmpOutputFile", tmpOutputFile);
+        extra.putParcelableArrayList("bitmaps", bitmaps);
         extra.putIntegerArrayList("images", images);
         extra.putStringArrayList("titles", titles);
         extra.putStringArrayList("descriptions", descriptions);
@@ -76,6 +80,7 @@ public class MainActivity extends AppCompatActivity
 
         if (savedInstanceState != null){
             tmpOutputFile = savedInstanceState.getString("tmpOutputFile");
+            bitmaps = savedInstanceState.getParcelableArrayList("bitmaps");
             images = savedInstanceState.getIntegerArrayList("images");
             titles = savedInstanceState.getStringArrayList("titles");
             descriptions = savedInstanceState.getStringArrayList("descriptions");
@@ -135,14 +140,15 @@ public class MainActivity extends AppCompatActivity
             } else {
                 holder = (MyViewHolder) row.getTag();
             }
-            //holder.image.setImageResource(images.get(position));
+            holder.image.setImageBitmap(bitmaps.get(images.get(position)));
             holder.title.setText(titles.get(position));
             holder.description.setText(descriptions.get(position));
 
             return row;
         }
 
-        public void add(String title, int image, String description) {
+        public void add(Bitmap bitmap, String title, int image, String description) {
+            bitmaps.add(bitmap);
             titles.add(title);
             images.add(image);
             descriptions.add(description);
@@ -252,7 +258,13 @@ public class MainActivity extends AppCompatActivity
                             dateString = String.format("hh:mm:ss dd.MM.yyyy", fileData);
                         }
                     }
-                    adapter.add(imageFile.getName(), 0, dateString);
+
+                    BitmapFactory.Options options = new BitmapFactory.Options();
+                    options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+                    options.inSampleSize = 12;
+                    Bitmap bitmap = BitmapFactory.decodeFile(imageFile.getPath(), options);
+
+                    adapter.add(bitmap, imageFile.getName(), bitmaps.size(), dateString);
                 }
                 break;
             case LOAD_PHOTO_REQUEST:
