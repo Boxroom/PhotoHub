@@ -1,6 +1,5 @@
 package de.dhbw_mannheim.photohub;
 
-import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -42,7 +41,7 @@ public class MainActivity extends AppCompatActivity
     static final int LOAD_PHOTO_REQUEST = 2;
 
     ArrayList<Bitmap> bitmaps = new ArrayList<>();
-    ArrayList<Integer> images = new ArrayList<>();
+    ArrayList<String> paths = new ArrayList<>();
     ArrayList<String> titles = new ArrayList<>();
     ArrayList<String> descriptions = new ArrayList<>();
 
@@ -54,7 +53,7 @@ public class MainActivity extends AppCompatActivity
         super.onSaveInstanceState(extra);
         extra.putString("tmpOutputFile", tmpOutputFile);
         extra.putParcelableArrayList("bitmaps", bitmaps);
-        extra.putIntegerArrayList("images", images);
+        extra.putStringArrayList("paths", paths);
         extra.putStringArrayList("titles", titles);
         extra.putStringArrayList("descriptions", descriptions);
     }
@@ -82,38 +81,39 @@ public class MainActivity extends AppCompatActivity
         if (savedInstanceState != null){
             tmpOutputFile = savedInstanceState.getString("tmpOutputFile");
             bitmaps = savedInstanceState.getParcelableArrayList("bitmaps");
-            images = savedInstanceState.getIntegerArrayList("images");
+            paths = savedInstanceState.getStringArrayList("paths");
             titles = savedInstanceState.getStringArrayList("titles");
             descriptions = savedInstanceState.getStringArrayList("descriptions");
         }
 
-        adapter = new ItemsAdapter(this, titles, images, descriptions);
+        adapter = new ItemsAdapter(this, titles, paths, descriptions);
         listView.setAdapter(adapter);
 
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                String itemValue = (String) listView.getItemAtPosition(position);
-
-                AlertDialog.Builder alertDialog = new AlertDialog.Builder(MainActivity.this);
-                alertDialog.setTitle("ListView");
-                alertDialog.setMessage(itemValue);
-                alertDialog.show();
+                openImage(position);
             }
         });
     }
 
+    private void openImage(int position){
+        Intent intent = new Intent(this, FullscreenActivity.class);
+        intent.putExtra("image", paths.get(position));
+        startActivity(intent);
+    }
+
     class ItemsAdapter extends ArrayAdapter<String> {
         Context context;
-        ArrayList<Integer> images;
+        ArrayList<String> paths;
         ArrayList<String> titles;
         ArrayList<String> descriptions;
 
-        public ItemsAdapter(Context context, ArrayList<String> titles, ArrayList<Integer> images, ArrayList<String> descriptions) {
+        public ItemsAdapter(Context context, ArrayList<String> titles, ArrayList<String> paths, ArrayList<String> descriptions) {
             super(context, R.layout.items_list_item, R.id.textView2, titles);
             this.context = context;
-            this.images = images;
+            this.paths = paths;
             this.titles = titles;
             this.descriptions = descriptions;
         }
@@ -141,17 +141,17 @@ public class MainActivity extends AppCompatActivity
             } else {
                 holder = (MyViewHolder) row.getTag();
             }
-            holder.image.setImageBitmap(bitmaps.get(images.get(position)));
+            holder.image.setImageBitmap(bitmaps.get(position));
             holder.title.setText(titles.get(position));
             holder.description.setText(descriptions.get(position));
 
             return row;
         }
 
-        public void add(Bitmap bitmap, String title, int image, String description) {
+        public void add(Bitmap bitmap, String title, String path, String description) {
             bitmaps.add(bitmap);
             titles.add(title);
-            images.add(image);
+            paths.add(path);
             descriptions.add(description);
         }
     }
@@ -188,7 +188,7 @@ public class MainActivity extends AppCompatActivity
         return super.onOptionsItemSelected(item);
     }
 
-    private String getPictrueName() {
+    private String getPictureName() {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss");
         String timestamp = sdf.format(new Date());
         return timestamp+".jpg";
@@ -204,7 +204,7 @@ public class MainActivity extends AppCompatActivity
             Intent it = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
             File pictureDirectory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES.concat("/PhotoHub/"));
             pictureDirectory.mkdirs();
-            String picName = getPictrueName();
+            String picName = getPictureName();
             File imageFile = new File(pictureDirectory, picName);
             Uri pictureUri = Uri.fromFile(imageFile);
             tmpOutputFile = imageFile.getAbsolutePath();
@@ -227,7 +227,7 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
-    private static int exifToDegrees(int exifOrientation) {
+    public static int exifToDegrees(int exifOrientation) {
         if (exifOrientation == ExifInterface.ORIENTATION_ROTATE_90) { return 90; }
         else if (exifOrientation == ExifInterface.ORIENTATION_ROTATE_180) {  return 180; }
         else if (exifOrientation == ExifInterface.ORIENTATION_ROTATE_270) {  return 270; }
@@ -272,15 +272,20 @@ public class MainActivity extends AppCompatActivity
 
                     BitmapFactory.Options options = new BitmapFactory.Options();
                     options.inPreferredConfig = Bitmap.Config.ARGB_8888;
-                    options.inSampleSize = 5;
+                    options.inSampleSize = 12;
                     Bitmap bitmap = BitmapFactory.decodeFile(imageFile.getPath(), options);
 
                     int rotationInDegrees = exifToDegrees(rotation);
                     Matrix matrix = new Matrix();
-                    if (rotation != 0f) {matrix.preRotate(rotationInDegrees);}
-                    Bitmap adjustedBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+                    Bitmap adjustedBitmap;
+                    if (rotationInDegrees != 0)
+                        matrix.preRotate(rotationInDegrees);
+                    if (rotationInDegrees%180 != 0)
+                        adjustedBitmap = Bitmap.createBitmap(bitmap, bitmap.getWidth()/4, 0, bitmap.getWidth()/2, bitmap.getHeight(), matrix, true);
+                    else
+                        adjustedBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
 
-                    adapter.add(adjustedBitmap, imageFile.getName(), bitmaps.size(), dateString);
+                    adapter.add(adjustedBitmap, imageFile.getName(), imageFile.getPath(), dateString);
                 }
                 break;
             case LOAD_PHOTO_REQUEST:
