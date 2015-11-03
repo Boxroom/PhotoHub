@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
@@ -226,6 +227,13 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
+    private static int exifToDegrees(int exifOrientation) {
+        if (exifOrientation == ExifInterface.ORIENTATION_ROTATE_90) { return 90; }
+        else if (exifOrientation == ExifInterface.ORIENTATION_ROTATE_180) {  return 180; }
+        else if (exifOrientation == ExifInterface.ORIENTATION_ROTATE_270) {  return 270; }
+        return 0;
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -236,10 +244,13 @@ public class MainActivity extends AppCompatActivity
                         break;
                     File imageFile = new File(tmpOutputFile);
                     String dateString = "";
+                    int rotation = 0;
                     try {
-                        ExifInterface intf = new ExifInterface(imageFile.toString());
-                        if(intf != null) {
-                            dateString = intf.getAttribute(ExifInterface.TAG_DATETIME);
+                        ExifInterface exif = new ExifInterface(imageFile.toString());
+                        if(exif != null) {
+                            rotation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+
+                            dateString = exif.getAttribute(ExifInterface.TAG_DATETIME);
                             SimpleDateFormat dateParser = new SimpleDateFormat("yyyy:MM:dd HH:mm:ss");
                             SimpleDateFormat dateConverter = new SimpleDateFormat("HH:mm:ss dd.MM.yyyy");
                             Date date = dateParser.parse(dateString);
@@ -261,10 +272,15 @@ public class MainActivity extends AppCompatActivity
 
                     BitmapFactory.Options options = new BitmapFactory.Options();
                     options.inPreferredConfig = Bitmap.Config.ARGB_8888;
-                    options.inSampleSize = 12;
+                    options.inSampleSize = 5;
                     Bitmap bitmap = BitmapFactory.decodeFile(imageFile.getPath(), options);
 
-                    adapter.add(bitmap, imageFile.getName(), bitmaps.size(), dateString);
+                    int rotationInDegrees = exifToDegrees(rotation);
+                    Matrix matrix = new Matrix();
+                    if (rotation != 0f) {matrix.preRotate(rotationInDegrees);}
+                    Bitmap adjustedBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+
+                    adapter.add(adjustedBitmap, imageFile.getName(), bitmaps.size(), dateString);
                 }
                 break;
             case LOAD_PHOTO_REQUEST:
