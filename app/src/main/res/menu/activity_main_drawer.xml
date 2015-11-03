@@ -4,9 +4,9 @@
     <item android:title="Importieren">
         <menu>
             <item android:id="@+id/nav_camara" android:icon="@android:drawable/ic_menu_camera"
-                android:title="Foto aufnehmen" />
+                android:title="Aufnehmen" />
             <item android:id="@+id/nav_gallery" android:icon="@android:drawable/ic_menu_gallery"
-                android:title="Import aus Galerie" />
+                android:title="Galerie" />
         </menu>
     </item>
 
