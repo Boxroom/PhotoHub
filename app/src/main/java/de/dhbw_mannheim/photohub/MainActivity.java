@@ -40,11 +40,6 @@ public class MainActivity extends AppCompatActivity
     static final int PICK_PHOTO_REQUEST = 1;
     static final int LOAD_PHOTO_REQUEST = 2;
 
-    ArrayList<Bitmap> bitmaps = new ArrayList<>();
-    ArrayList<String> paths = new ArrayList<>();
-    ArrayList<String> titles = new ArrayList<>();
-    ArrayList<String> descriptions = new ArrayList<>();
-
     private ItemsAdapter adapter;
     private String tmpOutputFile;
 
@@ -52,10 +47,10 @@ public class MainActivity extends AppCompatActivity
     protected void onSaveInstanceState(Bundle extra) {
         super.onSaveInstanceState(extra);
         extra.putString("tmpOutputFile", tmpOutputFile);
-        extra.putParcelableArrayList("bitmaps", bitmaps);
-        extra.putStringArrayList("paths", paths);
-        extra.putStringArrayList("titles", titles);
-        extra.putStringArrayList("descriptions", descriptions);
+        extra.putParcelableArrayList("adapter_bitmaps", adapter.bitmaps);
+        extra.putStringArrayList("adapter_paths", adapter.paths);
+        extra.putStringArrayList("adapter_titles", adapter.titles);
+        extra.putStringArrayList("adapter_descriptions", adapter.descriptions);
     }
 
     @Override
@@ -78,17 +73,24 @@ public class MainActivity extends AppCompatActivity
 
         final ListView listView = (ListView) findViewById(R.id.listView);
 
-        if (savedInstanceState != null){
+
+        if (savedInstanceState != null) {
             tmpOutputFile = savedInstanceState.getString("tmpOutputFile");
-            bitmaps = savedInstanceState.getParcelableArrayList("bitmaps");
-            paths = savedInstanceState.getStringArrayList("paths");
-            titles = savedInstanceState.getStringArrayList("titles");
-            descriptions = savedInstanceState.getStringArrayList("descriptions");
+            ArrayList<Bitmap> ad = savedInstanceState.getParcelableArrayList("adapter_bitmaps");
+            ArrayList<String> tit = savedInstanceState.getStringArrayList("adapter_titles");
+            ArrayList<String> path = savedInstanceState.getStringArrayList("adapter_paths");
+            ArrayList<String> desc = savedInstanceState.getStringArrayList("adapter_descriptions");
+            adapter = new ItemsAdapter(this, ad, tit, path, desc);
+        }else{
+            tmpOutputFile = "";
+            adapter = new ItemsAdapter(this);
+            File[] files = getPicturePath().listFiles();
+            for (File file : files) {
+                adapter.add(file);
+            }
+            this.recreate();
         }
-
-        adapter = new ItemsAdapter(this, titles, paths, descriptions);
         listView.setAdapter(adapter);
-
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -100,22 +102,33 @@ public class MainActivity extends AppCompatActivity
 
     private void openImage(int position){
         Intent intent = new Intent(this, FullscreenActivity.class);
-        intent.putExtra("image", paths.get(position));
+        intent.putExtra("image", adapter.paths.get(position));
         startActivity(intent);
     }
 
     class ItemsAdapter extends ArrayAdapter<String> {
         Context context;
+        ArrayList<Bitmap> bitmaps;
         ArrayList<String> paths;
         ArrayList<String> titles;
         ArrayList<String> descriptions;
 
-        public ItemsAdapter(Context context, ArrayList<String> titles, ArrayList<String> paths, ArrayList<String> descriptions) {
+        public ItemsAdapter(Context context, ArrayList<Bitmap> bitmaps, ArrayList<String> titles, ArrayList<String> paths, ArrayList<String> descriptions) {
             super(context, R.layout.items_list_item, R.id.textView2, titles);
             this.context = context;
+            this.bitmaps = bitmaps;
             this.paths = paths;
             this.titles = titles;
             this.descriptions = descriptions;
+        }
+
+        public ItemsAdapter(Context context) {
+            super(context, R.layout.items_list_item, R.id.textView2, new ArrayList<String>());
+            this.context = context;
+            this.bitmaps = new ArrayList<>();
+            this.paths = new ArrayList<>();
+            this.titles = new ArrayList<>();
+            this.descriptions = new ArrayList<>();
         }
 
         class MyViewHolder {
@@ -148,11 +161,48 @@ public class MainActivity extends AppCompatActivity
             return row;
         }
 
-        public void add(Bitmap bitmap, String title, String path, String description) {
-            bitmaps.add(bitmap);
-            titles.add(title);
-            paths.add(path);
-            descriptions.add(description);
+        public void add(File file){
+            String dateString = "";
+            int rotation = 0;
+            try {
+                ExifInterface exif = new ExifInterface(file.toString());
+                rotation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+
+                dateString = exif.getAttribute(ExifInterface.TAG_DATETIME);
+                SimpleDateFormat dateParser = new SimpleDateFormat("yyyy:MM:dd HH:mm:ss");
+                SimpleDateFormat dateConverter = new SimpleDateFormat("HH:mm:ss dd.MM.yyyy");
+                Date date = dateParser.parse(dateString);
+                dateString = dateConverter.format(date);
+            } catch(IOException | ParseException e) {
+                e.printStackTrace();
+            }
+
+            if(dateString.equals("")){
+                long date = file.lastModified();
+                Date fileData = new Date(date);
+                dateString = String.format("hh:mm:ss dd.MM.yyyy", fileData);
+            }
+
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+            options.inSampleSize = 12;
+            Bitmap bitmap = BitmapFactory.decodeFile(file.getPath(), options);
+
+            int rotationInDegrees = exifToDegrees(rotation);
+            Matrix matrix = new Matrix();
+            Bitmap adjustedBitmap;
+            if (rotationInDegrees != 0)
+                matrix.preRotate(rotationInDegrees);
+            if (rotationInDegrees%180 != 0)
+                adjustedBitmap = Bitmap.createBitmap(bitmap, bitmap.getWidth()/4, 0, bitmap.getWidth()/2, bitmap.getHeight(), matrix, true);
+            else
+                adjustedBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+
+            bitmaps.add(adjustedBitmap);
+            titles.add(file.getName());
+            paths.add(file.getPath());
+            descriptions.add(dateString);
+            this.notifyDataSetChanged();
         }
     }
 
@@ -178,7 +228,7 @@ public class MainActivity extends AppCompatActivity
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
+        //int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
         /*if (id == R.id.action_settings) {
@@ -186,6 +236,13 @@ public class MainActivity extends AppCompatActivity
         }*/
 
         return super.onOptionsItemSelected(item);
+    }
+
+    private File getPicturePath() {
+        String subdirectory = "/PhotoHub/";
+        File path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES.concat(subdirectory));
+        path.mkdirs();
+        return path;
     }
 
     private String getPictureName() {
@@ -202,8 +259,7 @@ public class MainActivity extends AppCompatActivity
 
         if (id == R.id.nav_camara) {
             Intent it = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-            File pictureDirectory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES.concat("/PhotoHub/"));
-            pictureDirectory.mkdirs();
+            File pictureDirectory = getPicturePath();
             String picName = getPictureName();
             File imageFile = new File(pictureDirectory, picName);
             Uri pictureUri = Uri.fromFile(imageFile);
@@ -243,49 +299,7 @@ public class MainActivity extends AppCompatActivity
                     if(tmpOutputFile == null)
                         break;
                     File imageFile = new File(tmpOutputFile);
-                    String dateString = "";
-                    int rotation = 0;
-                    try {
-                        ExifInterface exif = new ExifInterface(imageFile.toString());
-                        if(exif != null) {
-                            rotation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
-
-                            dateString = exif.getAttribute(ExifInterface.TAG_DATETIME);
-                            SimpleDateFormat dateParser = new SimpleDateFormat("yyyy:MM:dd HH:mm:ss");
-                            SimpleDateFormat dateConverter = new SimpleDateFormat("HH:mm:ss dd.MM.yyyy");
-                            Date date = dateParser.parse(dateString);
-                            dateString = dateConverter.format(date);
-                        }
-                    } catch(IOException e) {
-                        e.printStackTrace();
-                    } catch (ParseException e) {
-                        e.printStackTrace();
-                    }
-
-                    if(dateString.equals("")){
-                        if(imageFile.exists()) {
-                            long date = imageFile.lastModified();
-                            Date fileData = new Date(date);
-                            dateString = String.format("hh:mm:ss dd.MM.yyyy", fileData);
-                        }
-                    }
-
-                    BitmapFactory.Options options = new BitmapFactory.Options();
-                    options.inPreferredConfig = Bitmap.Config.ARGB_8888;
-                    options.inSampleSize = 12;
-                    Bitmap bitmap = BitmapFactory.decodeFile(imageFile.getPath(), options);
-
-                    int rotationInDegrees = exifToDegrees(rotation);
-                    Matrix matrix = new Matrix();
-                    Bitmap adjustedBitmap;
-                    if (rotationInDegrees != 0)
-                        matrix.preRotate(rotationInDegrees);
-                    if (rotationInDegrees%180 != 0)
-                        adjustedBitmap = Bitmap.createBitmap(bitmap, bitmap.getWidth()/4, 0, bitmap.getWidth()/2, bitmap.getHeight(), matrix, true);
-                    else
-                        adjustedBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
-
-                    adapter.add(adjustedBitmap, imageFile.getName(), imageFile.getPath(), dateString);
+                    adapter.add(imageFile);
                 }
                 break;
             case LOAD_PHOTO_REQUEST:
