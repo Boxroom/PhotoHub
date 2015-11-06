@@ -1,11 +1,7 @@
 package de.dhbw_mannheim.photohub;
 
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Matrix;
-import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -16,20 +12,13 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.TextView;
 
 import java.io.File;
-import java.io.IOException;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -86,9 +75,8 @@ public class MainActivity extends AppCompatActivity
             adapter = new ItemsAdapter(this);
             File[] files = getPicturePath().listFiles();
             for (File file : files) {
-                adapter.add(file);
+                adapter.add(file.getPath());
             }
-            this.recreate();
         }
         listView.setAdapter(adapter);
 
@@ -104,106 +92,6 @@ public class MainActivity extends AppCompatActivity
         Intent intent = new Intent(this, FullscreenActivity.class);
         intent.putExtra("image", adapter.paths.get(position));
         startActivity(intent);
-    }
-
-    class ItemsAdapter extends ArrayAdapter<String> {
-        Context context;
-        ArrayList<Bitmap> bitmaps;
-        ArrayList<String> paths;
-        ArrayList<String> titles;
-        ArrayList<String> descriptions;
-
-        public ItemsAdapter(Context context, ArrayList<Bitmap> bitmaps, ArrayList<String> titles, ArrayList<String> paths, ArrayList<String> descriptions) {
-            super(context, R.layout.items_list_item, R.id.textView2, titles);
-            this.context = context;
-            this.bitmaps = bitmaps;
-            this.paths = paths;
-            this.titles = titles;
-            this.descriptions = descriptions;
-        }
-
-        public ItemsAdapter(Context context) {
-            super(context, R.layout.items_list_item, R.id.textView2, new ArrayList<String>());
-            this.context = context;
-            this.bitmaps = new ArrayList<>();
-            this.paths = new ArrayList<>();
-            this.titles = new ArrayList<>();
-            this.descriptions = new ArrayList<>();
-        }
-
-        class MyViewHolder {
-            ImageView image;
-            TextView title;
-            TextView description;
-            MyViewHolder(View v) {
-                image = (ImageView) v.findViewById(R.id.imageView2);
-                title = (TextView) v.findViewById(R.id.textView2);
-                description = (TextView) v.findViewById(R.id.textView3);
-            }
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            View row=convertView;
-            MyViewHolder holder;
-            if(row==null) {
-                LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-                row = inflater.inflate(R.layout.items_list_item, parent, false);
-                holder = new MyViewHolder(row);
-                row.setTag(holder);
-            } else {
-                holder = (MyViewHolder) row.getTag();
-            }
-            holder.image.setImageBitmap(bitmaps.get(position));
-            holder.title.setText(titles.get(position));
-            holder.description.setText(descriptions.get(position));
-
-            return row;
-        }
-
-        public void add(File file){
-            String dateString = "";
-            int rotation = 0;
-            try {
-                ExifInterface exif = new ExifInterface(file.toString());
-                rotation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
-
-                dateString = exif.getAttribute(ExifInterface.TAG_DATETIME);
-                SimpleDateFormat dateParser = new SimpleDateFormat("yyyy:MM:dd HH:mm:ss");
-                SimpleDateFormat dateConverter = new SimpleDateFormat("HH:mm:ss dd.MM.yyyy");
-                Date date = dateParser.parse(dateString);
-                dateString = dateConverter.format(date);
-            } catch(IOException | ParseException e) {
-                e.printStackTrace();
-            }
-
-            if(dateString.equals("")){
-                long date = file.lastModified();
-                Date fileData = new Date(date);
-                dateString = String.format("hh:mm:ss dd.MM.yyyy", fileData);
-            }
-
-            BitmapFactory.Options options = new BitmapFactory.Options();
-            options.inPreferredConfig = Bitmap.Config.ARGB_8888;
-            options.inSampleSize = 12;
-            Bitmap bitmap = BitmapFactory.decodeFile(file.getPath(), options);
-
-            int rotationInDegrees = exifToDegrees(rotation);
-            Matrix matrix = new Matrix();
-            Bitmap adjustedBitmap;
-            if (rotationInDegrees != 0)
-                matrix.preRotate(rotationInDegrees);
-            if (rotationInDegrees%180 != 0)
-                adjustedBitmap = Bitmap.createBitmap(bitmap, bitmap.getWidth()/4, 0, bitmap.getWidth()/2, bitmap.getHeight(), matrix, true);
-            else
-                adjustedBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
-
-            bitmaps.add(adjustedBitmap);
-            titles.add(file.getName());
-            paths.add(file.getPath());
-            descriptions.add(dateString);
-            this.notifyDataSetChanged();
-        }
     }
 
     @Override
@@ -283,13 +171,6 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
-    public static int exifToDegrees(int exifOrientation) {
-        if (exifOrientation == ExifInterface.ORIENTATION_ROTATE_90) { return 90; }
-        else if (exifOrientation == ExifInterface.ORIENTATION_ROTATE_180) {  return 180; }
-        else if (exifOrientation == ExifInterface.ORIENTATION_ROTATE_270) {  return 270; }
-        return 0;
-    }
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -298,13 +179,15 @@ public class MainActivity extends AppCompatActivity
                 if(resultCode == RESULT_OK) {
                     if(tmpOutputFile == null)
                         break;
-                    File imageFile = new File(tmpOutputFile);
-                    adapter.add(imageFile);
+                    adapter.add(tmpOutputFile);
                 }
                 break;
             case LOAD_PHOTO_REQUEST:
                 if(resultCode == RESULT_OK) {
-
+                    String[] imagesPath = null;
+                    for (String path : imagesPath){
+                        adapter.add(path);
+                    }
                 }
                 break;
         }

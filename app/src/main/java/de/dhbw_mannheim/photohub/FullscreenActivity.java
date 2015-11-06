@@ -75,7 +75,7 @@ public class FullscreenActivity extends AppCompatActivity {
         try {
             exif = new ExifInterface(intent.getStringExtra("image"));
             int rotation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
-            int rotationInDegrees = MainActivity.exifToDegrees(rotation);
+            int rotationInDegrees = PreDef.exifToDegrees(rotation);
             Matrix matrix = new Matrix();
             if (rotationInDegrees != 0)
                 matrix.preRotate(rotationInDegrees);
