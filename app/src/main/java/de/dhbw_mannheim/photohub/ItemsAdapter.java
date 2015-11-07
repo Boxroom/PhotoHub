@@ -66,6 +66,7 @@ class ItemsAdapter extends ArrayAdapter<String> {
 
     @Override
     public void add(String filePath){
+        super.add(filePath);
         paths.add(filePath);
         File file = new File(filePath);
         titles.add(file.getName());
@@ -102,7 +103,14 @@ class ItemsAdapter extends ArrayAdapter<String> {
             adjustedBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
 
         bitmaps.add(adjustedBitmap);
-
-        this.notifyDataSetChanged();
+    }
+    @Override
+    public void remove(String filePath) {
+        super.remove(filePath);
+        int position = paths.indexOf(filePath);
+        paths.remove(position);
+        titles.remove(position);
+        descriptions.remove(position);
+        bitmaps.remove(position);
     }
 }

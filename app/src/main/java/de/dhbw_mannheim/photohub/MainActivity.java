@@ -1,6 +1,8 @@
 package de.dhbw_mannheim.photohub;
 
+import android.content.ContentValues;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
@@ -12,11 +14,15 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.ActionMode;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -30,6 +36,7 @@ public class MainActivity extends AppCompatActivity
     static final int LOAD_PHOTO_REQUEST = 2;
 
     private ItemsAdapter adapter;
+    private ArrayList<String> selected = new ArrayList<>();
     private String tmpOutputFile;
 
     @Override
@@ -62,7 +69,6 @@ public class MainActivity extends AppCompatActivity
 
         final ListView listView = (ListView) findViewById(R.id.listView);
 
-
         if (savedInstanceState != null) {
             tmpOutputFile = savedInstanceState.getString("tmpOutputFile");
             ArrayList<Bitmap> ad = savedInstanceState.getParcelableArrayList("adapter_bitmaps");
@@ -86,6 +92,102 @@ public class MainActivity extends AppCompatActivity
                 openImage(position);
             }
         });
+
+        listView.setMultiChoiceModeListener(new AbsListView.MultiChoiceModeListener() {
+            @Override
+            public void onItemCheckedStateChanged(ActionMode mode, int position, long id, boolean checked) {
+                if (selected.contains(adapter.paths.get(position))) {
+                    selected.remove(adapter.paths.get(position));
+                } else {
+                    selected.add(adapter.paths.get(position));
+                }
+                mode.setTitle(selected.size() + " ausgewählt");
+            }
+
+            @Override
+            public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+                MenuInflater inflater = mode.getMenuInflater();
+                inflater.inflate(R.menu.item_context_menu, menu);
+
+                return true;
+            }
+
+            @Override
+            public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+                return false;
+            }
+
+            @Override
+            public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+                switch (item.getItemId()) {
+                    case R.id.select_delete_id:
+                        for (String path : selected) {
+                            adapter.remove(path);
+                            File file = new File(path);
+                            file.delete();
+                        }
+                        Toast.makeText(getBaseContext(), selected.size() + " Bilder wurden gelöscht", Toast.LENGTH_SHORT).show();
+                        selected.clear();
+                        mode.finish();
+                        return true;
+                    case R.id.select_send_id:
+                        ArrayList<Uri> imageUris = new ArrayList<>();
+                        for (String path : selected) {
+                            File imageFile = new File(path);
+                            imageUris.add(getImageContentUri(imageFile));
+                        }
+                        Intent intent = new Intent();
+                        intent.setAction(Intent.ACTION_SEND_MULTIPLE);
+                        intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, imageUris);
+                        intent.putExtra(Intent.EXTRA_TEXT, "Von PhotoHub gesendet");
+                        intent.setType("image/*");
+                        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        startActivity(Intent.createChooser(intent, "Ausgewählte Bilder senden"));
+                        selected.clear();
+                        mode.finish();
+                        return true;
+                    case R.id.select_export_id:
+                        for (String path : selected) {
+
+                        }
+                        Toast.makeText(getBaseContext(), selected.size() + " Bilder der Galerie hinzugefügt", Toast.LENGTH_SHORT).show();
+                        selected.clear();
+                        mode.finish();
+                        return true;
+                    default:
+                        return false;
+                }
+            }
+
+            @Override
+            public void onDestroyActionMode(ActionMode mode) {
+                selected.clear();
+            }
+        });
+    }
+
+    private Uri getImageContentUri(File imageFile) {
+        String filePath = imageFile.getAbsolutePath();
+        Cursor cursor = getContentResolver().query(
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                new String[] { MediaStore.Images.Media._ID },
+                MediaStore.Images.Media.DATA + "=? ",
+                new String[] { filePath }, null);
+        if (cursor != null && cursor.moveToFirst()) {
+            int id = cursor.getInt(cursor
+                    .getColumnIndex(MediaStore.MediaColumns._ID));
+            Uri baseUri = Uri.parse("content://media/external/images/media");
+            return Uri.withAppendedPath(baseUri, "" + id);
+        } else {
+            if (imageFile.exists()) {
+                ContentValues values = new ContentValues();
+                values.put(MediaStore.Images.Media.DATA, filePath);
+                return getContentResolver().insert(
+                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+            } else {
+                return null;
+            }
+        }
     }
 
     private void openImage(int position){
@@ -146,24 +248,18 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         if (id == R.id.nav_camara) {
-            Intent it = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-            File pictureDirectory = getPicturePath();
-            String picName = getPictureName();
-            File imageFile = new File(pictureDirectory, picName);
+            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+            File imageFile = new File(getPicturePath(), getPictureName());
             Uri pictureUri = Uri.fromFile(imageFile);
             tmpOutputFile = imageFile.getAbsolutePath();
-            it.putExtra(android.provider.MediaStore.EXTRA_OUTPUT, pictureUri);
-            startActivityForResult(it, PICK_PHOTO_REQUEST);
+            intent.putExtra(android.provider.MediaStore.EXTRA_OUTPUT, pictureUri);
+            startActivityForResult(intent, PICK_PHOTO_REQUEST);
         } else if (id == R.id.nav_gallery) {
             Intent intent = new Intent();
             intent.setType("image/*");
             intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
             intent.setAction(Intent.ACTION_GET_CONTENT);
             startActivityForResult(Intent.createChooser(intent, "Select Picture"), LOAD_PHOTO_REQUEST);
-        } else if (id == R.id.nav_export) {
-
-        } else if (id == R.id.nav_send) {
-
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);

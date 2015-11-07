@@ -71,9 +71,10 @@ public class FullscreenActivity extends AppCompatActivity {
         ImageView image = (ImageView) mContentView;
         Bitmap bitmap = BitmapFactory.decodeFile(intent.getStringExtra("image"));
 
-        ExifInterface exif = null;
+        //TODO setTitle(Dateiname);
+
         try {
-            exif = new ExifInterface(intent.getStringExtra("image"));
+            ExifInterface exif = new ExifInterface(intent.getStringExtra("image"));
             int rotation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
             int rotationInDegrees = PreDef.exifToDegrees(rotation);
             Matrix matrix = new Matrix();
