@@ -15,6 +15,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
 
+import java.io.File;
 import java.io.IOException;
 
 /**
@@ -69,12 +70,12 @@ public class FullscreenActivity extends AppCompatActivity {
 
         Intent intent = getIntent();
         ImageView image = (ImageView) mContentView;
-        Bitmap bitmap = BitmapFactory.decodeFile(intent.getStringExtra("image"));
+        File file = new File(intent.getStringExtra("image"));
+        setTitle(file.getName());
 
-        //TODO setTitle(Dateiname);
-
+        Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath());
         try {
-            ExifInterface exif = new ExifInterface(intent.getStringExtra("image"));
+            ExifInterface exif = new ExifInterface(file.getAbsolutePath());
             int rotation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
             int rotationInDegrees = PreDef.exifToDegrees(rotation);
             Matrix matrix = new Matrix();
@@ -84,7 +85,6 @@ public class FullscreenActivity extends AppCompatActivity {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
         image.setImageBitmap(bitmap);
         /*WebView webView = (WebView) mContentView;
         webView.loadUrl("file://" + intent.getStringExtra("image"));
