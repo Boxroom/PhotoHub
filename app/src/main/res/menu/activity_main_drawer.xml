@@ -9,5 +9,13 @@
                 android:title="Galerie" />
         </menu>
     </item>
+    <item android:title="Sortieren">
+        <menu>
+            <item android:id="@+id/nav_title" android:icon="@android:drawable/ic_menu_sort_alphabetically"
+                android:title="Dateiname" />
+            <item android:id="@+id/nav_date" android:icon="@android:drawable/ic_menu_my_calendar"
+                android:title="Aufnahmedatum" />
+        </menu>
+    </item>
 
 </menu>

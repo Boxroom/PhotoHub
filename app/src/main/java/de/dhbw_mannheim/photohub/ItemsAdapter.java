@@ -17,68 +17,55 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-class ItemsAdapter extends ArrayAdapter<String> {
-    Context context;
-    ArrayList<Bitmap> bitmaps;
-    ArrayList<String> paths;
-    ArrayList<String> titles;
-    ArrayList<String> descriptions;
-    ArrayList<String> locations;
+class ItemsAdapter extends ArrayAdapter<ItemHolder> {
+    private Context context;
+    private Comparator<ItemHolder> sortBy;
 
-    public ItemsAdapter(Context context, ArrayList<Bitmap> bitmaps, ArrayList<String> titles, ArrayList<String> paths, ArrayList<String> descriptions, ArrayList<String> locations) {
-        super(context, R.layout.items_list_item, R.id.textView2, titles);
+    public ItemsAdapter(Context context, ArrayList<ItemHolder> items, int sortBy) {
+        super(context, R.layout.items_list_item, items);
         this.context = context;
-        this.bitmaps = bitmaps;
-        this.paths = paths;
-        this.titles = titles;
-        this.descriptions = descriptions;
-        this.locations = locations;
+        sortBy(sortBy);
     }
 
     public ItemsAdapter(Context context) {
-        super(context, R.layout.items_list_item, R.id.textView2, new ArrayList<String>());
+        super(context, R.layout.items_list_item, new ArrayList<ItemHolder>());
         this.context = context;
-        this.bitmaps = new ArrayList<>();
-        this.paths = new ArrayList<>();
-        this.titles = new ArrayList<>();
-        this.descriptions = new ArrayList<>();
-        this.locations = new ArrayList<>();
+        sortBy(0);
     }
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         View row = convertView;
-        ViewHolder holder;
-        if (row == null) {
-            LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            row = inflater.inflate(R.layout.items_list_item, parent, false);
-            holder = new ViewHolder(row);
-            row.setTag(holder);
-        } else {
-            holder = (ViewHolder) row.getTag();
+        if(getCount() > position){
+            ItemHolder item = getItem(position);
+            ViewHolder holder;
+            if (row == null) {
+                LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                row = inflater.inflate(R.layout.items_list_item, parent, false);
+                holder = new ViewHolder(row);
+                row.setTag(holder);
+            } else {
+                holder = (ViewHolder) row.getTag();
+            }
+            if (item.bitmap != null)
+                holder.image.setImageBitmap(item.bitmap);
+            if (item.title != null)
+                holder.title.setText(item.title);
+            if (item.description != null)
+                holder.description.setText(item.description);
+            if (item.location != null)
+                holder.location.setText(item.location);
         }
-        if (bitmaps.get(position) != null)
-            holder.image.setImageBitmap(bitmaps.get(position));
-        if (titles.get(position) != null)
-            holder.title.setText(titles.get(position));
-        if (descriptions.get(position) != null)
-            holder.description.setText(descriptions.get(position));
-        if (locations.get(position) != null)
-            holder.location.setText(locations.get(position));
-
         return row;
     }
 
-    @Override
     public void add(String filePath) {
-        super.add(filePath);
-        paths.add(filePath);
         File file = new File(filePath);
-        titles.add(file.getName());
         String dateString = "";
         int rotation = 0;
         double lat = 0, lng = 0;
@@ -102,7 +89,6 @@ class ItemsAdapter extends ArrayAdapter<String> {
         } catch (IOException | ParseException e) {
             dateString = dateConverter.format(new Date(file.lastModified()));
         }
-        descriptions.add(dateString);
 
         int rotationInDegrees = PreDef.exifToDegrees(rotation);
         Matrix matrix = new Matrix();
@@ -118,31 +104,97 @@ class ItemsAdapter extends ArrayAdapter<String> {
         else
             adjustedBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
 
-        bitmaps.add(adjustedBitmap);
-
+        String location = "";
         try {
             Geocoder gcd = new Geocoder(context, Locale.getDefault());
             List<Address> addresses = gcd.getFromLocation(lat, lng, 1);
             if (addresses != null && addresses.size() > 0) {
                 String subLocality = addresses.get(0).getSubLocality(), locality = addresses.get(0).getLocality(), country = addresses.get(0).getCountryName();
-                locations.add((subLocality != null && locality != null && subLocality != "" && locality != "" ? (subLocality + " - " + locality) : ((subLocality == null ? "" : subLocality) + (locality == null ? "" : locality)))
-                                + (country == null || country == "" ? "" : ((subLocality != null && subLocality != "") || (locality != null && locality != "") ? ", " + country : country))
-                );
+                location = ((subLocality != null && locality != null && subLocality != "" && locality != "" ? (subLocality + " - " + locality) : ((subLocality == null ? "" : subLocality) + (locality == null ? "" : locality)))
+                                + (country == null || country == "" ? "" : ((subLocality != null && subLocality != "") || (locality != null && locality != "") ? ", " + country : country)));
             } else
-                locations.add("");
+                location = "";
         } catch (IOException e) {
-            locations.add("");
+            location = "";
         }
+        add(new ItemHolder(adjustedBitmap, filePath, file.getName(), location, dateString));
     }
 
     @Override
+    public void add(ItemHolder object) {
+        super.add(object);
+    }
+
+    @Override
+    public void remove(ItemHolder object) {
+        super.remove(object);
+    }
+
     public void remove(String filePath) {
-        super.remove(filePath);
-        int position = paths.indexOf(filePath);
-        paths.remove(position);
-        titles.remove(position);
-        descriptions.remove(position);
-        locations.remove(position);
-        bitmaps.remove(position);
+        for(int position = 0; position < getCount(); ++position) {
+            if(getItem(position).path == filePath){
+                remove(getItem(position));
+            }
+        }
+    }
+
+    public void sortBy(int sortBy) {
+        switch (sortBy){
+            case 0:
+                this.sortBy =  new Comparator<ItemHolder>() {
+                    @Override
+                    public int compare(ItemHolder lhs, ItemHolder rhs) {
+                        return -lhs.title.compareToIgnoreCase(rhs.title);
+                    }
+                };
+                break;
+            case 1:
+                this.sortBy =  new Comparator<ItemHolder>() {
+                    @Override
+                    public int compare(ItemHolder lhs, ItemHolder rhs) {
+                        return lhs.title.compareToIgnoreCase(rhs.title);
+                    }
+                };
+                break;
+            case 2:
+                this.sortBy =  new Comparator<ItemHolder>() {
+                    SimpleDateFormat dateParser = new SimpleDateFormat("HH:mm:ss dd.MM.yyyy");
+                    @Override
+                    public int compare(ItemHolder lhs, ItemHolder rhs) {
+                        try {
+                            Date date = dateParser.parse(lhs.description);
+                            Date date2 = dateParser.parse(rhs.description);
+                            return -date.compareTo(date2);
+                        } catch (ParseException e) {
+                        }
+                        return 0;
+                    }
+                };
+                break;
+            case 3:
+                this.sortBy =  new Comparator<ItemHolder>() {
+                    SimpleDateFormat dateParser = new SimpleDateFormat("HH:mm:ss dd.MM.yyyy");
+                    @Override
+                    public int compare(ItemHolder lhs, ItemHolder rhs) {
+                        try {
+                            Date date = dateParser.parse(lhs.description);
+                            Date date2 = dateParser.parse(rhs.description);
+                            return date.compareTo(date2);
+                        } catch (ParseException e) {
+                        }
+                        return 0;
+                    }
+                };
+                break;
+        }
+        notifyDataSetChanged();
+    }
+
+    @Override
+    public void notifyDataSetChanged() {
+        this.setNotifyOnChange(false);
+        this.sort(sortBy);
+        this.setNotifyOnChange(true);
+        super.notifyDataSetChanged();
     }
 }

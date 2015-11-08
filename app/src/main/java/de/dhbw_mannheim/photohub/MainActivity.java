@@ -4,7 +4,6 @@ import android.content.ClipData;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
-import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -40,16 +39,19 @@ public class MainActivity extends AppCompatActivity
     private ItemsAdapter adapter;
     private ArrayList<String> selected = new ArrayList<>();
     private String tmpOutputFile;
+    private int sortBy = 0;
 
     @Override
     protected void onSaveInstanceState(Bundle extra) {
         super.onSaveInstanceState(extra);
         extra.putString("tmpOutputFile", tmpOutputFile);
-        extra.putParcelableArrayList("adapter_bitmaps", adapter.bitmaps);
-        extra.putStringArrayList("adapter_paths", adapter.paths);
-        extra.putStringArrayList("adapter_titles", adapter.titles);
-        extra.putStringArrayList("adapter_descriptions", adapter.descriptions);
-        extra.putStringArrayList("adapter_locations", adapter.locations);
+        ArrayList<ItemHolder> items = new ArrayList<>();
+        for(int position = 0; position < adapter.getCount(); ++position) {
+            items.add(adapter.getItem(position));
+        }
+        extra.putParcelableArrayList("adapter_items", items);
+        extra.putStringArrayList("selected", selected);
+        extra.putInt("sortBy", sortBy);
     }
 
     @Override
@@ -74,12 +76,10 @@ public class MainActivity extends AppCompatActivity
 
         if (savedInstanceState != null) {
             tmpOutputFile = savedInstanceState.getString("tmpOutputFile");
-            ArrayList<Bitmap> ad = savedInstanceState.getParcelableArrayList("adapter_bitmaps");
-            ArrayList<String> tit = savedInstanceState.getStringArrayList("adapter_titles");
-            ArrayList<String> path = savedInstanceState.getStringArrayList("adapter_paths");
-            ArrayList<String> desc = savedInstanceState.getStringArrayList("adapter_descriptions");
-            ArrayList<String> loc = savedInstanceState.getStringArrayList("adapter_locations");
-            adapter = new ItemsAdapter(this, ad, tit, path, desc, loc);
+            selected = savedInstanceState.getStringArrayList("selected");
+            ArrayList<ItemHolder> itm = savedInstanceState.getParcelableArrayList("adapter_items");
+            sortBy = savedInstanceState.getInt("sortBy");
+            adapter = new ItemsAdapter(this, itm, sortBy);
         } else {
             tmpOutputFile = "";
             adapter = new ItemsAdapter(this);
@@ -100,10 +100,10 @@ public class MainActivity extends AppCompatActivity
         listView.setMultiChoiceModeListener(new AbsListView.MultiChoiceModeListener() {
             @Override
             public void onItemCheckedStateChanged(ActionMode mode, int position, long id, boolean checked) {
-                if (selected.contains(adapter.paths.get(position))) {
-                    selected.remove(adapter.paths.get(position));
+                if (selected.contains(adapter.getItem(position).path)) {
+                    selected.remove(adapter.getItem(position).path);
                 } else {
-                    selected.add(adapter.paths.get(position));
+                    selected.add(adapter.getItem(position).path);
                 }
                 mode.setTitle(selected.size() + " ausgewählt");
             }
@@ -112,7 +112,7 @@ public class MainActivity extends AppCompatActivity
             public boolean onCreateActionMode(ActionMode mode, Menu menu) {
                 MenuInflater inflater = mode.getMenuInflater();
                 inflater.inflate(R.menu.item_context_menu, menu);
-
+                mode.setTitle(selected.size() + " ausgewählt");
                 return true;
             }
 
@@ -208,7 +208,7 @@ public class MainActivity extends AppCompatActivity
 
     private void openImage(int position) {
         Intent intent = new Intent(this, FullscreenActivity.class);
-        intent.putExtra("image", adapter.paths.get(position));
+        intent.putExtra("image", adapter.getItem(position).path);
         startActivity(intent);
     }
 
@@ -262,6 +262,16 @@ public class MainActivity extends AppCompatActivity
             intent.setType("image/*");
             intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
             startActivityForResult(Intent.createChooser(intent, "Fotos auswählen"), LOAD_PHOTO_REQUEST);
+        } else if (id == R.id.nav_title) {
+            if(sortBy == 0)
+                adapter.sortBy(sortBy = 1);
+            else
+                adapter.sortBy(sortBy = 0);
+        } else if (id == R.id.nav_date) {
+            if(sortBy == 2)
+                adapter.sortBy(sortBy = 3);
+            else
+                adapter.sortBy(sortBy = 2);
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
