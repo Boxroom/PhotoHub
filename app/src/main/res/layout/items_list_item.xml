@@ -6,9 +6,9 @@
 
     <ImageView
         android:src="@mipmap/ic_launcher"
-        android:layout_margin="10dp"
-        android:layout_width="80dp"
-        android:layout_height="45dp"
+        android:layout_margin="0dp"
+        android:layout_width="160dp"
+        android:layout_height="90dp"
         android:id="@+id/imageView2"
         android:layout_alignParentTop="true"
         android:layout_alignParentStart="true" />
@@ -21,7 +21,11 @@
         android:id="@+id/textView2"
         android:layout_alignTop="@+id/imageView2"
         android:layout_alignParentEnd="true"
-        android:layout_toEndOf="@+id/imageView2" />
+        android:layout_toEndOf="@+id/imageView2"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="10dp"
+        android:ellipsize="end"
+        android:maxLines="1" />
 
     <TextView
         android:layout_width="wrap_content"
@@ -29,8 +33,21 @@
         android:textAppearance="?android:attr/textAppearanceSmall"
         android:text="Small Text"
         android:id="@+id/textView3"
+        android:ellipsize="end"
         android:layout_below="@+id/textView2"
-        android:layout_alignEnd="@+id/textView2"
-        android:layout_alignBottom="@+id/imageView2"
-        android:layout_toEndOf="@+id/imageView2" />
+        android:layout_alignStart="@+id/textView2"
+        android:layout_alignParentEnd="true"
+        android:maxLines="2" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="Small Text"
+        android:id="@+id/textView4"
+        android:ellipsize="end"
+        android:layout_below="@+id/textView3"
+        android:layout_alignStart="@+id/textView3"
+        android:layout_alignParentEnd="true"
+        android:layout_alignBottom="@+id/imageView2" />
 </RelativeLayout>

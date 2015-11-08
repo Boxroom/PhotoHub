@@ -49,6 +49,7 @@ public class MainActivity extends AppCompatActivity
         extra.putStringArrayList("adapter_paths", adapter.paths);
         extra.putStringArrayList("adapter_titles", adapter.titles);
         extra.putStringArrayList("adapter_descriptions", adapter.descriptions);
+        extra.putStringArrayList("adapter_locations", adapter.locations);
     }
 
     @Override
@@ -77,7 +78,8 @@ public class MainActivity extends AppCompatActivity
             ArrayList<String> tit = savedInstanceState.getStringArrayList("adapter_titles");
             ArrayList<String> path = savedInstanceState.getStringArrayList("adapter_paths");
             ArrayList<String> desc = savedInstanceState.getStringArrayList("adapter_descriptions");
-            adapter = new ItemsAdapter(this, ad, tit, path, desc);
+            ArrayList<String> loc = savedInstanceState.getStringArrayList("adapter_locations");
+            adapter = new ItemsAdapter(this, ad, tit, path, desc, loc);
         } else {
             tmpOutputFile = "";
             adapter = new ItemsAdapter(this);
