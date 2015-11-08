@@ -1,12 +1,12 @@
 package de.dhbw_mannheim.photohub;
 
+import android.content.ClipData;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -25,9 +25,11 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import java.io.File;
-import java.text.SimpleDateFormat;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.nio.channels.FileChannel;
 import java.util.ArrayList;
-import java.util.Date;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -76,10 +78,10 @@ public class MainActivity extends AppCompatActivity
             ArrayList<String> path = savedInstanceState.getStringArrayList("adapter_paths");
             ArrayList<String> desc = savedInstanceState.getStringArrayList("adapter_descriptions");
             adapter = new ItemsAdapter(this, ad, tit, path, desc);
-        }else{
+        } else {
             tmpOutputFile = "";
             adapter = new ItemsAdapter(this);
-            File[] files = getPicturePath().listFiles();
+            File[] files = PreDef.getPicturePath().listFiles();
             for (File file : files) {
                 adapter.add(file.getPath());
             }
@@ -148,7 +150,19 @@ public class MainActivity extends AppCompatActivity
                         return true;
                     case R.id.select_export_id:
                         for (String path : selected) {
-
+                            try {
+                                File file = new File(path);
+                                MediaStore.Images.Media.insertImage(getContentResolver(), path, file.getName(), "Powered by PhotoHub");
+                                Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+                                Uri contentUri = Uri.fromFile(file);
+                                mediaScanIntent.setData(contentUri);
+                                sendBroadcast(mediaScanIntent);
+                            } catch (FileNotFoundException e) {
+                                Toast.makeText(getBaseContext(), "Bilder konnten nicht hinzugefügt werden", Toast.LENGTH_SHORT).show();
+                                selected.clear();
+                                mode.finish();
+                                return false;
+                            }
                         }
                         Toast.makeText(getBaseContext(), selected.size() + " Bilder der Galerie hinzugefügt", Toast.LENGTH_SHORT).show();
                         selected.clear();
@@ -170,9 +184,9 @@ public class MainActivity extends AppCompatActivity
         String filePath = imageFile.getAbsolutePath();
         Cursor cursor = getContentResolver().query(
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                new String[] { MediaStore.Images.Media._ID },
+                new String[]{MediaStore.Images.Media._ID},
                 MediaStore.Images.Media.DATA + "=? ",
-                new String[] { filePath }, null);
+                new String[]{filePath}, null);
         if (cursor != null && cursor.moveToFirst()) {
             int id = cursor.getInt(cursor
                     .getColumnIndex(MediaStore.MediaColumns._ID));
@@ -190,7 +204,7 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    private void openImage(int position){
+    private void openImage(int position) {
         Intent intent = new Intent(this, FullscreenActivity.class);
         intent.putExtra("image", adapter.paths.get(position));
         startActivity(intent);
@@ -228,19 +242,6 @@ public class MainActivity extends AppCompatActivity
         return super.onOptionsItemSelected(item);
     }
 
-    private File getPicturePath() {
-        String subdirectory = "/PhotoHub/";
-        File path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES.concat(subdirectory));
-        path.mkdirs();
-        return path;
-    }
-
-    private String getPictureName() {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss");
-        String timestamp = sdf.format(new Date());
-        return timestamp+".jpg";
-    }
-
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
@@ -249,17 +250,16 @@ public class MainActivity extends AppCompatActivity
 
         if (id == R.id.nav_camara) {
             Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-            File imageFile = new File(getPicturePath(), getPictureName());
+            File imageFile = new File(PreDef.getPicturePath(), PreDef.getPictureName());
             Uri pictureUri = Uri.fromFile(imageFile);
             tmpOutputFile = imageFile.getAbsolutePath();
             intent.putExtra(android.provider.MediaStore.EXTRA_OUTPUT, pictureUri);
             startActivityForResult(intent, PICK_PHOTO_REQUEST);
         } else if (id == R.id.nav_gallery) {
-            Intent intent = new Intent();
+            Intent intent = new Intent(Intent.ACTION_GET_CONTENT, MediaStore.Images.Media.INTERNAL_CONTENT_URI);
             intent.setType("image/*");
             intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-            intent.setAction(Intent.ACTION_GET_CONTENT);
-            startActivityForResult(Intent.createChooser(intent, "Select Picture"), LOAD_PHOTO_REQUEST);
+            startActivityForResult(Intent.createChooser(intent, "Fotos auswählen"), LOAD_PHOTO_REQUEST);
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -267,22 +267,43 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
+    private void savePhoto(String path) {
+        try {
+            File source = new File(path);
+            File destination = new File(PreDef.getPicturePath(), PreDef.getPictureName());
+            if (source.exists()) {
+                FileChannel src = new FileInputStream(source).getChannel();
+                FileChannel dst = new FileOutputStream(destination).getChannel();
+                dst.transferFrom(src, 0, src.size());
+                src.close();
+                dst.close();
+                adapter.add(destination.getPath());
+            }
+        } catch (Exception e) {
+            Toast.makeText(getBaseContext(), "Bilder konnten nicht geladen werden", Toast.LENGTH_SHORT).show();
+        }
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        switch(requestCode) {
+        switch (requestCode) {
             case PICK_PHOTO_REQUEST:
-                if(resultCode == RESULT_OK) {
-                    if(tmpOutputFile == null)
+                if (resultCode == RESULT_OK) {
+                    if (tmpOutputFile == null)
                         break;
                     adapter.add(tmpOutputFile);
                 }
                 break;
             case LOAD_PHOTO_REQUEST:
-                if(resultCode == RESULT_OK) {
-                    String[] imagesPath = null;
-                    for (String path : imagesPath){
-                        adapter.add(path);
+                if (resultCode == RESULT_OK) {
+                    if (data.getData() != null) {
+                        savePhoto(PreDef.getPath(getBaseContext(), data.getData()));
+                    } else {
+                        ClipData items = data.getClipData();
+                        for (int i = 0; i < items.getItemCount(); ++i) {
+                            savePhoto(PreDef.getPath(getBaseContext(), items.getItemAt(i).getUri()));
+                        }
                     }
                 }
                 break;

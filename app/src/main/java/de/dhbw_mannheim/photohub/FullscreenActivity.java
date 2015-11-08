@@ -83,7 +83,6 @@ public class FullscreenActivity extends AppCompatActivity {
                 matrix.preRotate(rotationInDegrees);
             bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
         } catch (IOException e) {
-            e.printStackTrace();
         }
         image.setImageBitmap(bitmap);
         /*WebView webView = (WebView) mContentView;

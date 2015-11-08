@@ -72,19 +72,19 @@ class ItemsAdapter extends ArrayAdapter<String> {
         titles.add(file.getName());
         String dateString = "";
         int rotation = 0;
+        SimpleDateFormat dateConverter = new SimpleDateFormat("HH:mm:ss dd.MM.yyyy");
         try {
             ExifInterface exif = new ExifInterface(filePath);
             rotation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
 
             dateString = exif.getAttribute(ExifInterface.TAG_DATETIME);
+            if(dateString == null) {
+                dateString = "";
+            }
             SimpleDateFormat dateParser = new SimpleDateFormat("yyyy:MM:dd HH:mm:ss");
-            SimpleDateFormat dateConverter = new SimpleDateFormat("HH:mm:ss dd.MM.yyyy");
-            Date date = dateParser.parse(dateString);
-            dateString = dateConverter.format(date);
+            dateString = dateConverter.format(dateParser.parse(dateString));
         } catch(IOException | ParseException e) {
-            long date = file.lastModified();
-            Date fileData = new Date(date);
-            dateString = String.format("hh:mm:ss dd.MM.yyyy", fileData);
+            dateString = dateConverter.format(new Date(file.lastModified()));
         }
         descriptions.add(dateString);
 
