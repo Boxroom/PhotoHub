@@ -66,7 +66,7 @@ class ItemsAdapter extends ArrayAdapter<ItemHolder> {
 
     public void add(String filePath) {
         File file = new File(filePath);
-        String dateString = "";
+        String dateString;
         int rotation = 0;
         double lat = 0, lng = 0;
         SimpleDateFormat dateConverter = new SimpleDateFormat("HH:mm:ss dd.MM.yyyy");
@@ -104,14 +104,14 @@ class ItemsAdapter extends ArrayAdapter<ItemHolder> {
         else
             adjustedBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
 
-        String location = "";
+        String location;
         try {
             Geocoder gcd = new Geocoder(context, Locale.getDefault());
             List<Address> addresses = gcd.getFromLocation(lat, lng, 1);
             if (addresses != null && addresses.size() > 0) {
                 String subLocality = addresses.get(0).getSubLocality(), locality = addresses.get(0).getLocality(), country = addresses.get(0).getCountryName();
-                location = ((subLocality != null && locality != null && subLocality != "" && locality != "" ? (subLocality + " - " + locality) : ((subLocality == null ? "" : subLocality) + (locality == null ? "" : locality)))
-                                + (country == null || country == "" ? "" : ((subLocality != null && subLocality != "") || (locality != null && locality != "") ? ", " + country : country)));
+                location = ((subLocality != null && locality != null && !subLocality.equals("") && !locality.equals("") ? (subLocality + " - " + locality) : ((subLocality == null ? "" : subLocality) + (locality == null ? "" : locality)))
+                                + (country == null || country.equals("") ? "" : ((subLocality != null && !subLocality.equals("")) || (locality != null && !locality.equals("")) ? ", " + country : country)));
             } else
                 location = "";
         } catch (IOException e) {
@@ -132,7 +132,7 @@ class ItemsAdapter extends ArrayAdapter<ItemHolder> {
 
     public void remove(String filePath) {
         for(int position = 0; position < getCount(); ++position) {
-            if(getItem(position).path == filePath){
+            if(getItem(position).path.equals(filePath)){
                 remove(getItem(position));
             }
         }
@@ -166,8 +166,8 @@ class ItemsAdapter extends ArrayAdapter<ItemHolder> {
                             Date date2 = dateParser.parse(rhs.description);
                             return -date.compareTo(date2);
                         } catch (ParseException e) {
+                            return -lhs.description.compareToIgnoreCase(rhs.description);
                         }
-                        return 0;
                     }
                 };
                 break;
@@ -181,8 +181,8 @@ class ItemsAdapter extends ArrayAdapter<ItemHolder> {
                             Date date2 = dateParser.parse(rhs.description);
                             return date.compareTo(date2);
                         } catch (ParseException e) {
+                            return lhs.description.compareToIgnoreCase(rhs.description);
                         }
-                        return 0;
                     }
                 };
                 break;

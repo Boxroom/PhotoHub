@@ -5,4 +5,13 @@
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
     <string name="title_activity_fullscreen2">Vollbild</string>
+    <string name="nav_import">Importieren</string>
+    <string name="nav_import_take">Aufnehmen</string>
+    <string name="nav_import_get">Galerie</string>
+    <string name="nav_sort">Sortieren</string>
+    <string name="nav_sort_name">Dateiname</string>
+    <string name="nav_sort_date">Aufnahmedatum</string>
+    <string name="menu_delete">Löschen</string>
+    <string name="menu_save">In Galerie speichern</string>
+    <string name="menu_send">Versenden</string>
 </resources>

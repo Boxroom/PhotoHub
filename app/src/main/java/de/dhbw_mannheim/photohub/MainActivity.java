@@ -193,6 +193,7 @@ public class MainActivity extends AppCompatActivity
             int id = cursor.getInt(cursor
                     .getColumnIndex(MediaStore.MediaColumns._ID));
             Uri baseUri = Uri.parse("content://media/external/images/media");
+            cursor.close();
             return Uri.withAppendedPath(baseUri, "" + id);
         } else {
             if (imageFile.exists()) {
