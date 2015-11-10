@@ -313,9 +313,11 @@ public class MainActivity extends AppCompatActivity
                     if (data.getData() != null) {
                         savePhoto(PreDef.getPath(getBaseContext(), data.getData()));
                     } else {
-                        ClipData items = data.getClipData();
-                        for (int i = 0; i < items.getItemCount(); ++i) {
-                            savePhoto(PreDef.getPath(getBaseContext(), items.getItemAt(i).getUri()));
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN) {
+                            ClipData items = data.getClipData();
+                            for (int i = 0; i < items.getItemCount(); ++i) {
+                                savePhoto(PreDef.getPath(getBaseContext(), items.getItemAt(i).getUri()));
+                            }
                         }
                     }
                 }
