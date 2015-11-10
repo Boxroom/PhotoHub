@@ -5,6 +5,7 @@ import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.design.widget.NavigationView;
@@ -256,12 +257,14 @@ public class MainActivity extends AppCompatActivity
             File imageFile = new File(PreDef.getPicturePath(), PreDef.getPictureName());
             Uri pictureUri = Uri.fromFile(imageFile);
             tmpOutputFile = imageFile.getAbsolutePath();
-            intent.putExtra(android.provider.MediaStore.EXTRA_OUTPUT, pictureUri);
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, pictureUri);
             startActivityForResult(intent, PICK_PHOTO_REQUEST);
         } else if (id == R.id.nav_gallery) {
             Intent intent = new Intent(Intent.ACTION_GET_CONTENT, MediaStore.Images.Media.INTERNAL_CONTENT_URI);
             intent.setType("image/*");
-            intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+                intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+            }
             startActivityForResult(Intent.createChooser(intent, "Fotos auswählen"), LOAD_PHOTO_REQUEST);
         } else if (id == R.id.nav_title) {
             if(sortBy == 0)
