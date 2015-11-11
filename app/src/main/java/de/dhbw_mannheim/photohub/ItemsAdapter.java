@@ -1,9 +1,6 @@
 package de.dhbw_mannheim.photohub;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Matrix;
 import android.location.Address;
 import android.location.Geocoder;
 import android.media.ExifInterface;
@@ -23,17 +20,20 @@ import java.util.List;
 import java.util.Locale;
 
 class ItemsAdapter extends ArrayAdapter<ItemHolder> {
+    public int loadCount;
     private Context context;
     private Comparator<ItemHolder> sortBy;
 
     public ItemsAdapter(Context context, ArrayList<ItemHolder> items, int sortBy) {
         super(context, R.layout.items_list_item, items);
+        loadCount = 0;
         this.context = context;
         sortBy(sortBy);
     }
 
     public ItemsAdapter(Context context) {
         super(context, R.layout.items_list_item, new ArrayList<ItemHolder>());
+        loadCount = 0;
         this.context = context;
         sortBy(0);
     }
@@ -52,6 +52,13 @@ class ItemsAdapter extends ArrayAdapter<ItemHolder> {
             } else {
                 holder = (ViewHolder) row.getTag();
             }
+            if(item.bitmap == null) {
+                holder.image.setImageResource(R.mipmap.ic_launcher);
+                if(loadCount < 2){
+                    ConvertImageTask imageTask = new ConvertImageTask(this);
+                    imageTask.execute(position);
+                }
+            }
             if (item.bitmap != null)
                 holder.image.setImageBitmap(item.bitmap);
             if (item.title != null)
@@ -63,6 +70,7 @@ class ItemsAdapter extends ArrayAdapter<ItemHolder> {
         }
         return row;
     }
+
 
     public void add(String filePath) {
         File file = new File(filePath);
@@ -90,20 +98,6 @@ class ItemsAdapter extends ArrayAdapter<ItemHolder> {
             dateString = dateConverter.format(new Date(file.lastModified()));
         }
 
-        int rotationInDegrees = PreDef.exifToDegrees(rotation);
-        Matrix matrix = new Matrix();
-        Bitmap adjustedBitmap;
-        if (rotationInDegrees != 0)
-            matrix.preRotate(rotationInDegrees);
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inPreferredConfig = Bitmap.Config.ARGB_8888;
-        options.inSampleSize = 15;
-        Bitmap bitmap = BitmapFactory.decodeFile(file.getPath(), options);
-        if (rotationInDegrees % 180 != 0)
-            adjustedBitmap = Bitmap.createBitmap(bitmap, bitmap.getWidth() / 4, 0, bitmap.getWidth() / 2, bitmap.getHeight(), matrix, true);
-        else
-            adjustedBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
-
         String location;
         try {
             Geocoder gcd = new Geocoder(context, Locale.getDefault());
@@ -117,7 +111,7 @@ class ItemsAdapter extends ArrayAdapter<ItemHolder> {
         } catch (IOException e) {
             location = "";
         }
-        add(new ItemHolder(adjustedBitmap, filePath, file.getName(), location, dateString));
+        add(new ItemHolder(null, filePath, file.getName(), location, dateString, rotation));
     }
 
     @Override
@@ -158,10 +152,10 @@ class ItemsAdapter extends ArrayAdapter<ItemHolder> {
                 break;
             case 2:
                 this.sortBy =  new Comparator<ItemHolder>() {
-                    SimpleDateFormat dateParser = new SimpleDateFormat("HH:mm:ss dd.MM.yyyy");
                     @Override
                     public int compare(ItemHolder lhs, ItemHolder rhs) {
                         try {
+                            SimpleDateFormat dateParser = new SimpleDateFormat("HH:mm:ss dd.MM.yyyy");
                             Date date = dateParser.parse(lhs.description);
                             Date date2 = dateParser.parse(rhs.description);
                             return -date.compareTo(date2);
@@ -173,10 +167,10 @@ class ItemsAdapter extends ArrayAdapter<ItemHolder> {
                 break;
             case 3:
                 this.sortBy =  new Comparator<ItemHolder>() {
-                    SimpleDateFormat dateParser = new SimpleDateFormat("HH:mm:ss dd.MM.yyyy");
                     @Override
                     public int compare(ItemHolder lhs, ItemHolder rhs) {
                         try {
+                            SimpleDateFormat dateParser = new SimpleDateFormat("HH:mm:ss dd.MM.yyyy");
                             Date date = dateParser.parse(lhs.description);
                             Date date2 = dateParser.parse(rhs.description);
                             return date.compareTo(date2);
