@@ -84,9 +84,11 @@ public class MainActivity extends AppCompatActivity
         } else {
             tmpOutputFile = "";
             adapter = new ItemsAdapter(this);
-            File[] files = PreDef.getPicturePath().listFiles();
-            for (File file : files) {
-                adapter.add(file.getPath());
+            File files[] = PreDef.getPicturePath().listFiles();
+            if(files != null){
+                for (File file : files) {
+                    adapter.add(file.getPath());
+                }
             }
         }
         listView.setAdapter(adapter);
