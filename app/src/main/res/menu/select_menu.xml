@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/select_delete_id"
+        android:title="@string/menu_delete"
+        android:icon="@android:drawable/ic_menu_delete"
+        />
+    <item
+        android:id="@+id/select_export_id"
+        android:title="@string/menu_save"
+        android:icon="@android:drawable/ic_menu_gallery"
+        />
+    <item
+        android:id="@+id/select_send_id"
+        android:title="@string/menu_send"
+        android:icon="@android:drawable/ic_menu_share"
+        />
+</menu>

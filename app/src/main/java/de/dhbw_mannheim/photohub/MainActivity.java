@@ -73,7 +73,7 @@ public class MainActivity extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
 
 
-        final ListView listView = (ListView) findViewById(R.id.listView);
+        ListView listView = (ListView) findViewById(R.id.listView);
 
         if (savedInstanceState != null) {
             tmpOutputFile = savedInstanceState.getString("tmpOutputFile");
@@ -112,7 +112,7 @@ public class MainActivity extends AppCompatActivity
             @Override
             public boolean onCreateActionMode(ActionMode mode, Menu menu) {
                 MenuInflater inflater = mode.getMenuInflater();
-                inflater.inflate(R.menu.item_context_menu, menu);
+                inflater.inflate(R.menu.select_menu, menu);
                 mode.setTitle(selected.size() + " ausgewählt");
                 return true;
             }
