@@ -1,8 +1,6 @@
 package de.dhbw_mannheim.photohub;
 
 import android.content.Context;
-import android.location.Address;
-import android.location.Geocoder;
 import android.media.ExifInterface;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,8 +14,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.List;
-import java.util.Locale;
 
 class ItemsAdapter extends ArrayAdapter<ItemHolder> {
     public int loadCount;
@@ -55,7 +51,7 @@ class ItemsAdapter extends ArrayAdapter<ItemHolder> {
             if(item.bitmap == null) {
                 holder.image.setImageResource(R.mipmap.ic_launcher);
                 if(loadCount < 2){
-                    ConvertImageTask imageTask = new ConvertImageTask(this);
+                    ConvertImageTask imageTask = new ConvertImageTask(context, this);
                     imageTask.execute(position);
                 }
             }
@@ -98,20 +94,7 @@ class ItemsAdapter extends ArrayAdapter<ItemHolder> {
             dateString = dateConverter.format(new Date(file.lastModified()));
         }
 
-        String location;
-        try {
-            Geocoder gcd = new Geocoder(context, Locale.getDefault());
-            List<Address> addresses = gcd.getFromLocation(lat, lng, 1);
-            if (addresses != null && addresses.size() > 0) {
-                String subLocality = addresses.get(0).getSubLocality(), locality = addresses.get(0).getLocality(), country = addresses.get(0).getCountryName();
-                location = ((subLocality != null && locality != null && !subLocality.equals("") && !locality.equals("") ? (subLocality + " - " + locality) : ((subLocality == null ? "" : subLocality) + (locality == null ? "" : locality)))
-                                + (country == null || country.equals("") ? "" : ((subLocality != null && !subLocality.equals("")) || (locality != null && !locality.equals("")) ? ", " + country : country)));
-            } else
-                location = "";
-        } catch (IOException e) {
-            location = "";
-        }
-        add(new ItemHolder(null, filePath, file.getName(), location, dateString, rotation));
+        add(new ItemHolder(null, filePath, file.getName(), "", dateString, rotation, lat, lng));
     }
 
     @Override

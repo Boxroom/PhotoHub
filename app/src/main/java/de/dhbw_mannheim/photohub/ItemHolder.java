@@ -11,14 +11,18 @@ public class ItemHolder implements Parcelable {
     String location;
     String description;
     int rotation;
+    double lat;
+    double lng;
 
-    protected ItemHolder(Bitmap bitmap, String path, String title, String location, String description, int rotation) {
+    protected ItemHolder(Bitmap bitmap, String path, String title, String location, String description, int rotation, double lat, double lng) {
         this.bitmap = bitmap;
         this.path = path;
         this.title = title;
         this.location = location;
         this.description = description;
         this.rotation = rotation;
+        this.lat = lat;
+        this.lng = lng;
     }
 
     protected ItemHolder(Parcel in) {
@@ -28,6 +32,8 @@ public class ItemHolder implements Parcelable {
         description = in.readString();
         location = in.readString();
         rotation = in.readInt();
+        lat = in.readDouble();
+        lng = in.readDouble();
     }
 
     @Override
@@ -43,6 +49,8 @@ public class ItemHolder implements Parcelable {
         dest.writeString(description);
         dest.writeString(location);
         dest.writeInt(rotation);
+        dest.writeDouble(lat);
+        dest.writeDouble(lng);
     }
 
     @SuppressWarnings("unused")
