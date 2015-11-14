@@ -16,20 +16,23 @@ import java.util.Comparator;
 import java.util.Date;
 
 class ItemsAdapter extends ArrayAdapter<ItemHolder> {
-    public int loadCount;
+    public int loadCountImg;
+    public int loadCountLoc;
     private Context context;
     private Comparator<ItemHolder> sortBy;
 
     public ItemsAdapter(Context context, ArrayList<ItemHolder> items, int sortBy) {
         super(context, R.layout.items_list_item, items);
-        loadCount = 0;
+        loadCountImg = 0;
+        loadCountLoc = 0;
         this.context = context;
         sortBy(sortBy);
     }
 
     public ItemsAdapter(Context context) {
         super(context, R.layout.items_list_item, new ArrayList<ItemHolder>());
-        loadCount = 0;
+        loadCountImg = 0;
+        loadCountLoc = 0;
         this.context = context;
         sortBy(0);
     }
@@ -50,9 +53,15 @@ class ItemsAdapter extends ArrayAdapter<ItemHolder> {
             }
             if(item.bitmap == null) {
                 holder.image.setImageResource(R.mipmap.ic_launcher);
-                if(loadCount < 2){
-                    ConvertImageTask imageTask = new ConvertImageTask(context, this);
+                if(loadCountImg < 2){
+                    ConvertImageTask imageTask = new ConvertImageTask(this);
                     imageTask.execute(position);
+                }
+            }
+            if(item.location == null) {
+                if(loadCountLoc < 1){
+                    GetLocationTask locationTask = new GetLocationTask(context, this);
+                    locationTask.execute(position);
                 }
             }
             if (item.bitmap != null)
@@ -94,7 +103,7 @@ class ItemsAdapter extends ArrayAdapter<ItemHolder> {
             dateString = dateConverter.format(new Date(file.lastModified()));
         }
 
-        add(new ItemHolder(null, filePath, file.getName(), "", dateString, rotation, lat, lng));
+        add(new ItemHolder(null, filePath, file.getName(), null, dateString, rotation, lat, lng));
     }
 
     @Override
