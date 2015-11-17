@@ -149,11 +149,12 @@ public class MainActivity extends AppCompatActivity
                         intent.putExtra(Intent.EXTRA_TEXT, "Von PhotoHub gesendet");
                         intent.setType("image/*");
                         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                        startActivity(Intent.createChooser(intent, "Ausgewählte Bilder senden"));
+                        startActivity(Intent.createChooser(intent, "Senden mit:"));
                         selected.clear();
                         mode.finish();
                         return true;
                     case R.id.select_export_id:
+                        int count = selected.size();
                         for (String path : selected) {
                             try {
                                 File file = new File(path);
@@ -163,13 +164,11 @@ public class MainActivity extends AppCompatActivity
                                 mediaScanIntent.setData(contentUri);
                                 sendBroadcast(mediaScanIntent);
                             } catch (FileNotFoundException e) {
-                                Toast.makeText(getBaseContext(), "Bilder konnten nicht hinzugefügt werden", Toast.LENGTH_SHORT).show();
-                                selected.clear();
-                                mode.finish();
-                                return false;
+                                Toast.makeText(getBaseContext(), "Bild konnte nicht hinzugefügt werden", Toast.LENGTH_SHORT).show();
+                                --count;
                             }
                         }
-                        Toast.makeText(getBaseContext(), selected.size() + " Bilder der Galerie hinzugefügt", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getBaseContext(), count + " Bilder der Galerie hinzugefügt", Toast.LENGTH_SHORT).show();
                         selected.clear();
                         mode.finish();
                         return true;
@@ -193,8 +192,7 @@ public class MainActivity extends AppCompatActivity
                 MediaStore.Images.Media.DATA + "=? ",
                 new String[]{filePath}, null);
         if (cursor != null && cursor.moveToFirst()) {
-            int id = cursor.getInt(cursor
-                    .getColumnIndex(MediaStore.MediaColumns._ID));
+            int id = cursor.getInt(cursor.getColumnIndex(MediaStore.MediaColumns._ID));
             Uri baseUri = Uri.parse("content://media/external/images/media");
             cursor.close();
             return Uri.withAppendedPath(baseUri, "" + id);
@@ -202,8 +200,7 @@ public class MainActivity extends AppCompatActivity
             if (imageFile.exists()) {
                 ContentValues values = new ContentValues();
                 values.put(MediaStore.Images.Media.DATA, filePath);
-                return getContentResolver().insert(
-                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+                return getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
             } else {
                 return null;
             }
@@ -248,7 +245,6 @@ public class MainActivity extends AppCompatActivity
         return super.onOptionsItemSelected(item);
     }
 
-    @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
         // Handle navigation view item clicks here.

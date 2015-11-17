@@ -54,14 +54,12 @@ class ItemsAdapter extends ArrayAdapter<ItemHolder> {
             if(item.bitmap == null) {
                 holder.image.setImageResource(R.mipmap.ic_launcher);
                 if(loadCountImg < 2){
-                    ConvertImageTask imageTask = new ConvertImageTask(this);
-                    imageTask.execute(position);
+                    new ConvertImageTask(this).execute(position);
                 }
             }
             if(item.location == null) {
                 if(loadCountLoc < 1){
-                    GetLocationTask locationTask = new GetLocationTask(context, this);
-                    locationTask.execute(position);
+                    new GetLocationTask(context, this).execute(position);
                 }
             }
             if (item.bitmap != null)
@@ -131,6 +129,7 @@ class ItemsAdapter extends ArrayAdapter<ItemHolder> {
                     @Override
                     public int compare(ItemHolder lhs, ItemHolder rhs) {
                         return -lhs.title.compareToIgnoreCase(rhs.title);
+                        //return -( -x if lhs.title < rhs.title | 0 if lhs.title = rhs.title | +x if lhs.title > rhs.title)
                     }
                 };
                 break;

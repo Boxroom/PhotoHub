@@ -85,12 +85,6 @@ public class FullscreenActivity extends AppCompatActivity {
         } catch (IOException e) {
         }
         image.setImageBitmap(bitmap);
-        /*WebView webView = (WebView) mContentView;
-        webView.loadUrl("file://" + intent.getStringExtra("image"));
-        webView.getSettings().setBuiltInZoomControls(true);
-        webView.getSettings().setDisplayZoomControls(false);
-        webView.getSettings().setLoadWithOverviewMode(true);
-        webView.getSettings().setUseWideViewPort(true);*/
     }
 
     @Override
