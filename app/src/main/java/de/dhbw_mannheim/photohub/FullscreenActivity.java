@@ -11,7 +11,6 @@ import android.os.Handler;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
 
@@ -27,13 +26,13 @@ public class FullscreenActivity extends AppCompatActivity {
      * Whether or not the system UI should be auto-hidden after
      * {@link #AUTO_HIDE_DELAY_MILLIS} milliseconds.
      */
-    private static final boolean AUTO_HIDE = true;
+    //private static final boolean AUTO_HIDE = true;
 
     /**
      * If {@link #AUTO_HIDE} is set, the number of milliseconds to wait after
      * user interaction before hiding the system UI.
      */
-    private static final int AUTO_HIDE_DELAY_MILLIS = 3000;
+    //private static final int AUTO_HIDE_DELAY_MILLIS = 3000;
 
     /**
      * Some older devices needs a small delay between UI widget updates
@@ -82,7 +81,7 @@ public class FullscreenActivity extends AppCompatActivity {
             if (rotationInDegrees != 0)
                 matrix.preRotate(rotationInDegrees);
             bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
-        } catch (IOException e) {
+        } catch (IOException ignored) {
         }
         image.setImageBitmap(bitmap);
     }
@@ -113,7 +112,7 @@ public class FullscreenActivity extends AppCompatActivity {
      * system UI. This is to prevent the jarring behavior of controls going away
      * while interacting with activity UI.
      */
-    private final View.OnTouchListener mDelayHideTouchListener = new View.OnTouchListener() {
+    /*private final View.OnTouchListener mDelayHideTouchListener = new View.OnTouchListener() {
         @Override
         public boolean onTouch(View view, MotionEvent motionEvent) {
             if (AUTO_HIDE) {
@@ -121,7 +120,7 @@ public class FullscreenActivity extends AppCompatActivity {
             }
             return false;
         }
-    };
+    };*/
 
     private void toggle() {
         if (mVisible) {

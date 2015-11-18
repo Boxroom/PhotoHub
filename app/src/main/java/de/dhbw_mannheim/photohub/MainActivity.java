@@ -34,14 +34,18 @@ import java.util.ArrayList;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
-    static final int PICK_PHOTO_REQUEST = 1;
-    static final int LOAD_PHOTO_REQUEST = 2;
+    private final int PICK_PHOTO_REQUEST = 1;
+    private final int LOAD_PHOTO_REQUEST = 2;
 
     private ItemsAdapter adapter;
     private ArrayList<String> selected = new ArrayList<>();
     private String tmpOutputFile;
     private int sortBy = 0;
 
+    /**
+     * Save current content before rebuild activity
+     * @param extra
+     */
     @Override
     protected void onSaveInstanceState(Bundle extra) {
         super.onSaveInstanceState(extra);
@@ -55,6 +59,10 @@ public class MainActivity extends AppCompatActivity
         extra.putInt("sortBy", sortBy);
     }
 
+    /**
+     *
+     * @param savedInstanceState
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -228,21 +236,6 @@ public class MainActivity extends AppCompatActivity
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        //int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        /*if (id == R.id.action_settings) {
-            return true;
-        }*/
-
-        return super.onOptionsItemSelected(item);
     }
 
     @Override

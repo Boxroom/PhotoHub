@@ -14,6 +14,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.Locale;
 
 class ItemsAdapter extends ArrayAdapter<ItemHolder> {
     public int loadCountImg;
@@ -80,7 +81,7 @@ class ItemsAdapter extends ArrayAdapter<ItemHolder> {
         String dateString;
         int rotation = 0;
         double lat = 0, lng = 0;
-        SimpleDateFormat dateConverter = new SimpleDateFormat("HH:mm:ss dd.MM.yyyy");
+        SimpleDateFormat dateConverter = new SimpleDateFormat("HH:mm:ss dd.MM.yyyy", Locale.GERMANY);
         try {
             ExifInterface exif = new ExifInterface(filePath);
             rotation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
@@ -95,8 +96,7 @@ class ItemsAdapter extends ArrayAdapter<ItemHolder> {
             if (dateString == null) {
                 dateString = "";
             }
-            SimpleDateFormat dateParser = new SimpleDateFormat("yyyy:MM:dd HH:mm:ss");
-            dateString = dateConverter.format(dateParser.parse(dateString));
+            dateString = dateConverter.format(new SimpleDateFormat("yyyy:MM:dd HH:mm:ss", Locale.GERMANY).parse(dateString));
         } catch (IOException | ParseException e) {
             dateString = dateConverter.format(new Date(file.lastModified()));
         }
@@ -146,7 +146,7 @@ class ItemsAdapter extends ArrayAdapter<ItemHolder> {
                     @Override
                     public int compare(ItemHolder lhs, ItemHolder rhs) {
                         try {
-                            SimpleDateFormat dateParser = new SimpleDateFormat("HH:mm:ss dd.MM.yyyy");
+                            SimpleDateFormat dateParser = new SimpleDateFormat("HH:mm:ss dd.MM.yyyy", Locale.GERMANY);
                             Date date = dateParser.parse(lhs.description);
                             Date date2 = dateParser.parse(rhs.description);
                             return -date.compareTo(date2);
@@ -161,7 +161,7 @@ class ItemsAdapter extends ArrayAdapter<ItemHolder> {
                     @Override
                     public int compare(ItemHolder lhs, ItemHolder rhs) {
                         try {
-                            SimpleDateFormat dateParser = new SimpleDateFormat("HH:mm:ss dd.MM.yyyy");
+                            SimpleDateFormat dateParser = new SimpleDateFormat("HH:mm:ss dd.MM.yyyy", Locale.GERMANY);
                             Date date = dateParser.parse(lhs.description);
                             Date date2 = dateParser.parse(rhs.description);
                             return date.compareTo(date2);

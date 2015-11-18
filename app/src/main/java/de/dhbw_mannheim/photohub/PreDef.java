@@ -13,6 +13,7 @@ import android.provider.MediaStore;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 
 public class PreDef {
     public static int exifToDegrees(int exifOrientation) {
@@ -34,7 +35,7 @@ public class PreDef {
     }
 
     public static String getPictureName() {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.GERMANY);
         String timeStamp = sdf.format(new Date());
         String suffix = "00";
         String extension = ".jpg";
@@ -54,7 +55,7 @@ public class PreDef {
      *
      * @param context The context.
      * @param uri     The Uri to query.
-     * @author paulburke
+     * /@author paulburke
      */
     public static String getPath(final Context context, final Uri uri) {
 
