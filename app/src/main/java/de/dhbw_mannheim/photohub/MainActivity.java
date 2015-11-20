@@ -287,7 +287,7 @@ public class MainActivity extends AppCompatActivity
                 adapter.add(destination.getPath());
             }
         } catch (Exception e) {
-            Toast.makeText(getBaseContext(), "Bilder konnten nicht geladen werden", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getBaseContext(), "Bild konnte nicht geladen werden", Toast.LENGTH_SHORT).show();
         }
     }
 

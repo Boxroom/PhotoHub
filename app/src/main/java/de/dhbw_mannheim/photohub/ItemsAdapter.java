@@ -21,6 +21,7 @@ class ItemsAdapter extends ArrayAdapter<ItemHolder> {
     public int loadCountLoc;
     private Context context;
     private Comparator<ItemHolder> sortBy;
+    protected boolean internet;
 
     public ItemsAdapter(Context context, ArrayList<ItemHolder> items, int sortBy) {
         super(context, R.layout.items_list_item, items);
@@ -28,6 +29,7 @@ class ItemsAdapter extends ArrayAdapter<ItemHolder> {
         loadCountLoc = 0;
         this.context = context;
         sortBy(sortBy);
+        internet = true;
     }
 
     public ItemsAdapter(Context context) {
@@ -36,6 +38,7 @@ class ItemsAdapter extends ArrayAdapter<ItemHolder> {
         loadCountLoc = 0;
         this.context = context;
         sortBy(0);
+        internet = true;
     }
 
     @Override
@@ -102,16 +105,6 @@ class ItemsAdapter extends ArrayAdapter<ItemHolder> {
         }
 
         add(new ItemHolder(null, filePath, file.getName(), null, dateString, rotation, lat, lng));
-    }
-
-    @Override
-    public void add(ItemHolder object) {
-        super.add(object);
-    }
-
-    @Override
-    public void remove(ItemHolder object) {
-        super.remove(object);
     }
 
     public void remove(String filePath) {

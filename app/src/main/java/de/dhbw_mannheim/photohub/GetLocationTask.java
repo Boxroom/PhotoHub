@@ -20,19 +20,22 @@ public class GetLocationTask extends AsyncTask<Integer, Void, Boolean> {
     @Override
     protected Boolean doInBackground(Integer... pos) {
         if(adapter.getItem(pos[0]).lat + adapter.getItem(pos[0]).lng > 0){
-            try {
-                Geocoder gcd = new Geocoder(context, Locale.getDefault());
-                List<Address> addresses = gcd.getFromLocation(adapter.getItem(pos[0]).lat, adapter.getItem(pos[0]).lng, 1);
-                if (addresses != null && addresses.size() > 0) {
-                    String subLocality = addresses.get(0).getSubLocality(), locality = addresses.get(0).getLocality(), country = addresses.get(0).getCountryName();
-                    adapter.getItem(pos[0]).location = ((subLocality != null && locality != null && !subLocality.equals("") && !locality.equals("") ? (subLocality + " - " + locality) : ((subLocality == null ? "" : subLocality) + (locality == null ? "" : locality)))
-                            + (country == null || country.equals("") ? "" : ((subLocality != null && !subLocality.equals("")) || (locality != null && !locality.equals("")) ? ", " + country : country)));
-                    return true;
+            if(adapter.internet) {
+                try {
+                    Geocoder gcd = new Geocoder(context, Locale.getDefault());
+                    List<Address> addresses = gcd.getFromLocation(adapter.getItem(pos[0]).lat, adapter.getItem(pos[0]).lng, 1);
+                    if (addresses != null && addresses.size() > 0) {
+                        String subLocality = addresses.get(0).getSubLocality(), locality = addresses.get(0).getLocality(), country = addresses.get(0).getCountryName();
+                        adapter.getItem(pos[0]).location = ((subLocality != null && locality != null && !subLocality.equals("") && !locality.equals("") ? (subLocality + " - " + locality) : ((subLocality == null ? "" : subLocality) + (locality == null ? "" : locality)))
+                                + (country == null || country.equals("") ? "" : ((subLocality != null && !subLocality.equals("")) || (locality != null && !locality.equals("")) ? ", " + country : country)));
+                        return true;
+                    }
+                } catch (IOException e) {
+                    adapter.internet = false;
                 }
-            } catch (IOException e) {
-                adapter.getItem(pos[0]).location = "Kein Internet";
-                return true;
             }
+            adapter.getItem(pos[0]).location = "Kein Internet";
+            return true;
         }
         adapter.getItem(pos[0]).location = "";
         return false;
