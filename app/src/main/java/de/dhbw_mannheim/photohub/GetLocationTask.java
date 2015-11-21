@@ -38,7 +38,7 @@ public class GetLocationTask extends AsyncTask<Integer, Void, Boolean> {
             return true;
         }
         adapter.getItem(pos[0]).location = "";
-        return false;
+        return true;
     }
 
     @Override

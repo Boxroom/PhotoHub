@@ -57,12 +57,13 @@ class ItemsAdapter extends ArrayAdapter<ItemHolder> {
             }
             if(item.bitmap == null) {
                 holder.image.setImageResource(R.mipmap.ic_launcher);
-                if(loadCountImg < 2){
+                if(loadCountImg < 1){
                     new ConvertImageTask(this).execute(position);
                 }
             }
             if(item.location == null) {
-                if(loadCountLoc < 1){
+                holder.location.setText("..loading..");
+                if(loadCountImg < 1){
                     new GetLocationTask(context, this).execute(position);
                 }
             }
