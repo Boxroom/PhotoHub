@@ -67,6 +67,8 @@ public class FullscreenActivity extends AppCompatActivity {
             }
         });
 
+        //Get the image path from the intent which start this activity
+        //Get the title and display the image in fullscreen
         Intent intent = getIntent();
         ImageView image = (ImageView) mContentView;
         File file = new File(intent.getStringExtra("image"));

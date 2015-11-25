@@ -1,9 +1,7 @@
 package de.dhbw_mannheim.photohub;
 
 import android.content.ClipData;
-import android.content.ContentValues;
 import android.content.Intent;
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -37,14 +35,14 @@ public class MainActivity extends AppCompatActivity
     private final int PICK_PHOTO_REQUEST = 1;
     private final int LOAD_PHOTO_REQUEST = 2;
 
-    private ItemsAdapter adapter;
-    private ArrayList<String> selected = new ArrayList<>();
-    private String tmpOutputFile;
-    private int sortBy = 0;
+    private ItemsAdapter adapter;   //provides all list entries - data and layout
+    private ArrayList<String> selected = new ArrayList<>();     //contains all paths from selected entries
+    private String tmpOutputFile;       //ensure that we keep our location where the system camera safe our photo
+    private int sortBy = 0;         //represents the value how our list is sorted
 
     /**
      * Save current content before rebuild activity
-     * @param extra
+     * @param extra - container
      */
     @Override
     protected void onSaveInstanceState(Bundle extra) {
@@ -60,8 +58,8 @@ public class MainActivity extends AppCompatActivity
     }
 
     /**
-     *
-     * @param savedInstanceState
+     * Build activity
+     * @param savedInstanceState - Old content
      */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,18 +78,19 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-
-        ListView listView = (ListView) findViewById(R.id.listView);
-
+        //initialize data
         if (savedInstanceState != null) {
+            //rebuild activity - based on savedInstanceState
             tmpOutputFile = savedInstanceState.getString("tmpOutputFile");
             selected = savedInstanceState.getStringArrayList("selected");
             ArrayList<ItemHolder> itm = savedInstanceState.getParcelableArrayList("adapter_items");
             sortBy = savedInstanceState.getInt("sortBy");
             adapter = new ItemsAdapter(this, itm, sortBy);
         } else {
+            //build new activity
             tmpOutputFile = "";
             adapter = new ItemsAdapter(this);
+            //Add all files from our directory
             File files[] = PreDef.getPicturePath().listFiles();
             if(files != null){
                 for (File file : files) {
@@ -99,8 +98,13 @@ public class MainActivity extends AppCompatActivity
                 }
             }
         }
+
+        //initialize listView with our content provided by the adapter
+        ListView listView = (ListView) findViewById(R.id.listView);
         listView.setAdapter(adapter);
 
+        //initialize how to handle an clicked list item
+        //on short click - open a new activity with the image
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -108,9 +112,11 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
+        //handle selection mode - (get in with long click)
         listView.setMultiChoiceModeListener(new AbsListView.MultiChoiceModeListener() {
             @Override
             public void onItemCheckedStateChanged(ActionMode mode, int position, long id, boolean checked) {
+                //provide the abillity to select and deselect entries
                 if (selected.contains(adapter.getItem(position).path)) {
                     selected.remove(adapter.getItem(position).path);
                 } else {
@@ -121,6 +127,7 @@ public class MainActivity extends AppCompatActivity
 
             @Override
             public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+                //initialize the select menu, displayed at the top
                 MenuInflater inflater = mode.getMenuInflater();
                 inflater.inflate(R.menu.select_menu, menu);
                 mode.setTitle(selected.size() + " ausgewählt");
@@ -134,8 +141,10 @@ public class MainActivity extends AppCompatActivity
 
             @Override
             public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+                //Declare what to do when the user press an option from the select menu
                 switch (item.getItemId()) {
                     case R.id.select_delete_id:
+                        //Remove all selected images from the list like from our memory
                         for (String path : selected) {
                             adapter.remove(path);
                             File file = new File(path);
@@ -146,10 +155,12 @@ public class MainActivity extends AppCompatActivity
                         mode.finish();
                         return true;
                     case R.id.select_send_id:
+                        //Send all selected images via an methode which the user choose, like email whatsapp facebook etc.
                         ArrayList<Uri> imageUris = new ArrayList<>();
                         for (String path : selected) {
                             File imageFile = new File(path);
-                            imageUris.add(getImageContentUri(imageFile));
+                            //imageUris.add(PreDef.getImageContentUri(imageFile, getBaseContext()));
+                            imageUris.add(Uri.fromFile(imageFile));
                         }
                         Intent intent = new Intent();
                         intent.setAction(Intent.ACTION_SEND_MULTIPLE);
@@ -162,6 +173,7 @@ public class MainActivity extends AppCompatActivity
                         mode.finish();
                         return true;
                     case R.id.select_export_id:
+                        //Include all selected images in the system gallery
                         int count = selected.size();
                         for (String path : selected) {
                             try {
@@ -190,29 +202,6 @@ public class MainActivity extends AppCompatActivity
                 selected.clear();
             }
         });
-    }
-
-    private Uri getImageContentUri(File imageFile) {
-        String filePath = imageFile.getAbsolutePath();
-        Cursor cursor = getContentResolver().query(
-                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                new String[]{MediaStore.Images.Media._ID},
-                MediaStore.Images.Media.DATA + "=? ",
-                new String[]{filePath}, null);
-        if (cursor != null && cursor.moveToFirst()) {
-            int id = cursor.getInt(cursor.getColumnIndex(MediaStore.MediaColumns._ID));
-            Uri baseUri = Uri.parse("content://media/external/images/media");
-            cursor.close();
-            return Uri.withAppendedPath(baseUri, "" + id);
-        } else {
-            if (imageFile.exists()) {
-                ContentValues values = new ContentValues();
-                values.put(MediaStore.Images.Media.DATA, filePath);
-                return getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
-            } else {
-                return null;
-            }
-        }
     }
 
     private void openImage(int position) {
@@ -244,6 +233,8 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         if (id == R.id.nav_camara) {
+            //User clicked import from camera
+            //Start system camera and save picture directly to a specified file (pictureUri)
             Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
             File imageFile = new File(PreDef.getPicturePath(), PreDef.getPictureName());
             Uri pictureUri = Uri.fromFile(imageFile);
@@ -251,6 +242,8 @@ public class MainActivity extends AppCompatActivity
             intent.putExtra(MediaStore.EXTRA_OUTPUT, pictureUri);
             startActivityForResult(intent, PICK_PHOTO_REQUEST);
         } else if (id == R.id.nav_gallery) {
+            //User clicked import from system gallery
+            //Open system gallery and let the user select multiple images to copy in this app
             Intent intent = new Intent(Intent.ACTION_GET_CONTENT, MediaStore.Images.Media.INTERNAL_CONTENT_URI);
             intent.setType("image/*");
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
@@ -258,11 +251,13 @@ public class MainActivity extends AppCompatActivity
             }
             startActivityForResult(Intent.createChooser(intent, "Fotos auswählen"), LOAD_PHOTO_REQUEST);
         } else if (id == R.id.nav_title) {
+            //Sort list by filename
             if(sortBy == 0)
                 adapter.sortBy(sortBy = 1);
             else
                 adapter.sortBy(sortBy = 0);
         } else if (id == R.id.nav_date) {
+            //Sort list by image capture date
             if(sortBy == 2)
                 adapter.sortBy(sortBy = 3);
             else
@@ -274,6 +269,11 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
+    /**
+     * Copy an image from the specified path to the app image directory
+     * add it to our list if it was copied successfully
+     * @param path      path to the image which should be copy
+     */
     private void savePhoto(String path) {
         try {
             File source = new File(path);
@@ -299,15 +299,18 @@ public class MainActivity extends AppCompatActivity
                 if (resultCode == RESULT_OK) {
                     if (tmpOutputFile == null)
                         break;
+                    //add the image taken by the system camera to our list
                     adapter.add(tmpOutputFile);
                 }
                 break;
             case LOAD_PHOTO_REQUEST:
                 if (resultCode == RESULT_OK) {
                     if (data.getData() != null) {
+                        //get one image from the gallery - so save it
                         savePhoto(PreDef.getPath(getBaseContext(), data.getData()));
                     } else {
                         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN) {
+                            //we got multiple images, so save one by one
                             ClipData items = data.getClipData();
                             for (int i = 0; i < items.getItemCount(); ++i) {
                                 savePhoto(PreDef.getPath(getBaseContext(), items.getItemAt(i).getUri()));

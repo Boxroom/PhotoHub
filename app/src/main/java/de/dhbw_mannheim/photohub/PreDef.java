@@ -16,6 +16,11 @@ import java.util.Date;
 import java.util.Locale;
 
 public class PreDef {
+    /**
+     * convert the rotation, provided by the exif data from an image, to an integer representing the rotation in degrees
+     * @param exifOrientation       rotation from exif data
+     * @return          rotation in degrees
+     */
     public static int exifToDegrees(int exifOrientation) {
         if (exifOrientation == ExifInterface.ORIENTATION_ROTATE_90) {
             return 90;
@@ -27,6 +32,10 @@ public class PreDef {
         return 0;
     }
 
+    /**
+     *
+     * @return      Path to our app image directory
+     */
     public static File getPicturePath() {
         String subdirectory = "/PhotoHub/";
         File path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES.concat(subdirectory));
@@ -34,6 +43,10 @@ public class PreDef {
         return path;
     }
 
+    /**
+     *
+     * @return      filename for a new image by convention yyyyMMdd_HHmmssNN.jpg
+     */
     public static String getPictureName() {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.GERMANY);
         String timeStamp = sdf.format(new Date());
@@ -47,6 +60,30 @@ public class PreDef {
         }
         return timeStamp + suffix + extension;
     }
+
+    /* //Uri.fromFile(imageFile) provide same functionality
+    public static Uri getImageContentUri(File imageFile, Context context) {
+        String filePath = imageFile.getAbsolutePath();
+        Cursor cursor = context.getContentResolver().query(
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                new String[]{MediaStore.Images.Media._ID},
+                MediaStore.Images.Media.DATA + "=? ",
+                new String[]{filePath}, null);
+        if (cursor != null && cursor.moveToFirst()) {
+            int id = cursor.getInt(cursor.getColumnIndex(MediaStore.MediaColumns._ID));
+            Uri baseUri = Uri.parse("content://media/external/images/media");
+            cursor.close();
+            return Uri.withAppendedPath(baseUri, "" + id);
+        } else {
+            if (imageFile.exists()) {
+                ContentValues values = new ContentValues();
+                values.put(MediaStore.Images.Media.DATA, filePath);
+                return context.getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+            } else {
+                return null;
+            }
+        }
+    }*/
 
     /**
      * Get a file path from a Uri. This will get the the path for Storage Access

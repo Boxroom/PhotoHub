@@ -56,17 +56,21 @@ class ItemsAdapter extends ArrayAdapter<ItemHolder> {
                 holder = (ViewHolder) row.getTag();
             }
             if(item.bitmap == null) {
+                //Image preview still not loaded, so check if we are allowed to load it now. Then load it.
                 holder.image.setImageResource(R.mipmap.ic_launcher);
                 if(loadCountImg < 1){
                     new ConvertImageTask(this).execute(position);
                 }
             }
             if(item.location == null) {
-                holder.location.setText("..loading..");
+                //Location still not converted, so check if we are allowed to convert it now. Then convert it.
+                holder.location.setText(R.string.loading);
                 if(loadCountImg < 1){
                     new GetLocationTask(context, this).execute(position);
                 }
             }
+
+            //fill the layout with data
             if (item.bitmap != null)
                 holder.image.setImageBitmap(item.bitmap);
             if (item.title != null)
@@ -79,7 +83,11 @@ class ItemsAdapter extends ArrayAdapter<ItemHolder> {
         return row;
     }
 
-
+    /**
+     * Add a new image entry to our list, based on the image path
+     * This generates a ItemHolder and add it through the super method
+     * @param filePath      image path that should be add
+     */
     public void add(String filePath) {
         File file = new File(filePath);
         String dateString;
@@ -108,6 +116,11 @@ class ItemsAdapter extends ArrayAdapter<ItemHolder> {
         add(new ItemHolder(null, filePath, file.getName(), null, dateString, rotation, lat, lng));
     }
 
+    /**
+     * Finds the path in our list entries and remove that entry
+     * This finds the ItemHolder object and remove it through the super method
+     * @param filePath      image path that should be removed from the list
+     */
     public void remove(String filePath) {
         for(int position = 0; position < getCount(); ++position) {
             if(getItem(position).path.equals(filePath)){
@@ -116,9 +129,14 @@ class ItemsAdapter extends ArrayAdapter<ItemHolder> {
         }
     }
 
+    /**
+     * Set new Comparator for our list
+     * @param sortBy        id for sorting method
+     */
     public void sortBy(int sortBy) {
         switch (sortBy){
             case 0:
+                //Sort by title lexicographical desc
                 this.sortBy =  new Comparator<ItemHolder>() {
                     @Override
                     public int compare(ItemHolder lhs, ItemHolder rhs) {
@@ -128,6 +146,7 @@ class ItemsAdapter extends ArrayAdapter<ItemHolder> {
                 };
                 break;
             case 1:
+                //Sort by title lexicographical asc
                 this.sortBy =  new Comparator<ItemHolder>() {
                     @Override
                     public int compare(ItemHolder lhs, ItemHolder rhs) {
@@ -136,6 +155,7 @@ class ItemsAdapter extends ArrayAdapter<ItemHolder> {
                 };
                 break;
             case 2:
+                //Sort by date desc
                 this.sortBy =  new Comparator<ItemHolder>() {
                     @Override
                     public int compare(ItemHolder lhs, ItemHolder rhs) {
@@ -151,6 +171,7 @@ class ItemsAdapter extends ArrayAdapter<ItemHolder> {
                 };
                 break;
             case 3:
+                //Sort by date desc
                 this.sortBy =  new Comparator<ItemHolder>() {
                     @Override
                     public int compare(ItemHolder lhs, ItemHolder rhs) {
@@ -171,9 +192,11 @@ class ItemsAdapter extends ArrayAdapter<ItemHolder> {
 
     @Override
     public void notifyDataSetChanged() {
+        //reorder list
         this.setNotifyOnChange(false);
         this.sort(sortBy);
         this.setNotifyOnChange(true);
+
         super.notifyDataSetChanged();
     }
 }

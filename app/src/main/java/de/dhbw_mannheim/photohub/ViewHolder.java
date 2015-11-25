@@ -4,6 +4,9 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+/**
+ * An object of this class holds the layout for one list entry
+ */
 public class ViewHolder {
     ImageView image;
     TextView title;

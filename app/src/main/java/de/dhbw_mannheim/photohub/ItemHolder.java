@@ -4,6 +4,10 @@ import android.graphics.Bitmap;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+/**
+ * An object of this class holds the data for one list entry
+ * This class implements Parcelable to rebuild the activity with the dataset without loading
+ */
 public class ItemHolder implements Parcelable {
     Bitmap bitmap;
     String path;
